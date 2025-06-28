@@ -1,66 +1,101 @@
-import React, { useState } from 'react';
-import Header from './components/Header';
-import LandingPage from './components/LandingPage';
-import AuthPage from './components/AuthPage';
-import BattleDashboard from './components/BattleDashboard';
-import Leaderboard from './components/Leaderboard';
-import SocialHub from './components/SocialHub';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
+import Header from './components/layout/Header';
+import ProtectedRoute from './components/auth/ProtectedRoute';
+import AuthPage from './pages/AuthPage';
+import DashboardPage from './pages/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
+import LeaderboardPage from './pages/LeaderboardPage';
+import SocialPage from './pages/SocialPage';
+import { useAuthStore } from './stores/authStore';
+import LoadingSpinner from './components/ui/LoadingSpinner';
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      retry: 1,
+    },
+  },
+});
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'auth' | 'home' | 'leaderboard' | 'social'>('landing');
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const { loading } = useAuthStore();
 
-  const handleAuth = (user: any) => {
-    setCurrentUser(user);
-    setCurrentPage('home');
-  };
-
-  const handleNavigate = (page: string) => {
-    if (page === 'auth' && !currentUser) {
-      setCurrentPage('auth');
-    } else if (currentUser || page === 'landing') {
-      setCurrentPage(page as any);
-    }
-  };
-
-  const handleGetStarted = () => {
-    if (currentUser) {
-      setCurrentPage('home');
-    } else {
-      setCurrentPage('auth');
-    }
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {currentPage !== 'landing' && (
-        <Header 
-          currentUser={currentUser} 
-          onNavigate={handleNavigate}
-          currentPage={currentPage}
-        />
-      )}
-      
-      {currentPage === 'landing' && (
-        <LandingPage onGetStarted={handleGetStarted} />
-      )}
-      
-      {currentPage === 'auth' && (
-        <AuthPage onAuth={handleAuth} />
-      )}
-      
-      {currentPage === 'home' && currentUser && (
-        <BattleDashboard currentUser={currentUser} />
-      )}
-      
-      {currentPage === 'leaderboard' && currentUser && (
-        <Leaderboard currentUser={currentUser} />
-      )}
-      
-      {currentPage === 'social' && currentUser && (
-        <SocialHub currentUser={currentUser} />
-      )}
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <Router>
+        <div className="min-h-screen bg-gray-50">
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+            }}
+          />
+          
+          <Routes>
+            <Route path="/auth" element={<AuthPage />} />
+            <Route
+              path="/*"
+              element={
+                <>
+                  <Header />
+                  <Routes>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <DashboardPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <ProfilePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/leaderboard"
+                      element={
+                        <ProtectedRoute>
+                          <LeaderboardPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/social"
+                      element={
+                        <ProtectedRoute>
+                          <SocialPage />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </>
+              }
+            />
+          </Routes>
+        </div>
+      </Router>
+    </QueryClientProvider>
   );
 }
 
