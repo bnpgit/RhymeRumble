@@ -25,12 +25,43 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', data.user.id)
           .single();
 
-        if (profileError) throw profileError;
-
-        set({
-          user: { ...profile, email: data.user.email! },
-          session: data.session,
-        });
+        if (profileError) {
+          console.error('Profile fetch error:', profileError);
+          // If profile doesn't exist, create it
+          if (profileError.code === 'PGRST116') {
+            const { error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: data.user.id,
+                username: data.user.email?.split('@')[0] || 'user',
+                points: 0,
+                level: 1,
+              });
+            
+            if (createError) throw createError;
+            
+            // Fetch the newly created profile
+            const { data: newProfile, error: newProfileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+            
+            if (newProfileError) throw newProfileError;
+            
+            set({
+              user: { ...newProfile, email: data.user.email! },
+              session: data.session,
+            });
+          } else {
+            throw profileError;
+          }
+        } else {
+          set({
+            user: { ...profile, email: data.user.email! },
+            session: data.session,
+          });
+        }
 
         toast.success('Welcome back!');
       }
@@ -43,15 +74,31 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signUp: async (email: string, password: string, username: string) => {
     try {
+      // Check if username is already taken
+      const { data: existingUser } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username)
+        .single();
+
+      if (existingUser) {
+        throw new Error('Username is already taken');
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            username: username,
+          }
+        }
       });
 
       if (error) throw error;
 
       if (data.user) {
-        // Create user profile
+        // Create user profile immediately
         const { error: profileError } = await supabase
           .from('profiles')
           .insert({
@@ -61,9 +108,29 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             level: 1,
           });
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          // Don't throw here, as the user is already created
+        }
 
-        toast.success('Account created successfully! Please check your email to verify your account.');
+        // If user is immediately confirmed (no email verification required)
+        if (data.session) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+          if (profile) {
+            set({
+              user: { ...profile, email: data.user.email! },
+              session: data.session,
+            });
+            toast.success('Account created successfully! Welcome to RhymeRumble!');
+          }
+        } else {
+          toast.success('Account created successfully! You can now sign in.');
+        }
       }
     } catch (error) {
       const message = handleSupabaseError(error);
@@ -125,23 +192,48 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
 // Initialize auth state
 supabase.auth.onAuthStateChange(async (event, session) => {
-  const { user, loading } = useAuthStore.getState();
-
+  console.log('Auth state changed:', event, session?.user?.email);
+  
   if (event === 'SIGNED_IN' && session?.user) {
-    if (!user) {
-      // Fetch user profile
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
+    // Fetch user profile
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', session.user.id)
+      .single();
 
-      if (profile) {
-        useAuthStore.setState({
-          user: { ...profile, email: session.user.email! },
-          session,
-          loading: false,
+    if (profile) {
+      useAuthStore.setState({
+        user: { ...profile, email: session.user.email! },
+        session,
+        loading: false,
+      });
+    } else {
+      // Create profile if it doesn't exist
+      const username = session.user.email?.split('@')[0] || 'user';
+      const { error } = await supabase
+        .from('profiles')
+        .insert({
+          id: session.user.id,
+          username,
+          points: 0,
+          level: 1,
         });
+
+      if (!error) {
+        const { data: newProfile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        if (newProfile) {
+          useAuthStore.setState({
+            user: { ...newProfile, email: session.user.email! },
+            session,
+            loading: false,
+          });
+        }
       }
     }
   } else if (event === 'SIGNED_OUT') {
