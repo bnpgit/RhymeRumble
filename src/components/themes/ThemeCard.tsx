@@ -34,26 +34,26 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
   };
 
   const getGradientColors = (title: string) => {
-    if (title.toLowerCase().includes('fire')) return 'from-red-400 via-orange-500 to-yellow-500';
-    if (title.toLowerCase().includes('ocean')) return 'from-blue-400 via-cyan-500 to-teal-500';
-    if (title.toLowerCase().includes('time')) return 'from-purple-400 via-indigo-500 to-blue-500';
-    if (title.toLowerCase().includes('dream')) return 'from-pink-400 via-purple-500 to-indigo-500';
-    return 'from-indigo-400 via-purple-500 to-pink-500';
+    if (title.toLowerCase().includes('fire')) return 'from-red-400 to-orange-500';
+    if (title.toLowerCase().includes('ocean')) return 'from-blue-400 to-cyan-500';
+    if (title.toLowerCase().includes('time')) return 'from-purple-400 to-indigo-500';
+    if (title.toLowerCase().includes('dream')) return 'from-pink-400 to-purple-500';
+    return 'from-indigo-400 to-purple-500';
   };
 
   return (
-    <div className="bg-white rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden border border-gray-100 hover:border-indigo-200 transform hover:scale-105 hover:-rotate-1 card-3d group">
-      {/* Header with gradient */}
-      <div className={`h-2 bg-gradient-to-r ${getGradientColors(theme.title)}`}></div>
+    <div className="bg-white rounded-2xl shadow-medium hover:shadow-soft transition-all duration-200 overflow-hidden card-hover">
+      {/* Simplified header */}
+      <div className={`h-1 bg-gradient-to-r ${getGradientColors(theme.title)}`}></div>
       
-      <div className="p-8">
-        <div className="flex items-start justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <div className={`bg-gradient-to-r ${getGradientColors(theme.title)} p-4 rounded-2xl shadow-lg transform group-hover:rotate-12 transition-all duration-300`}>
-              <ThemeIcon className="h-8 w-8 text-white" />
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            <div className={`bg-gradient-to-r ${getGradientColors(theme.title)} p-3 rounded-xl shadow-soft`}>
+              <ThemeIcon className="h-6 w-6 text-white" />
             </div>
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
+              <h3 className="text-xl font-bold text-gray-900">
                 {theme.title}
               </h3>
               <p className="text-sm text-gray-500 font-medium">
@@ -61,47 +61,47 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
               </p>
             </div>
           </div>
-          <span className={`px-4 py-2 rounded-full text-sm font-bold shadow-lg ${
+          <span className={`px-3 py-1 rounded-full text-sm font-bold ${
             theme.is_active 
-              ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white animate-pulse' 
-              : 'bg-gradient-to-r from-gray-300 to-gray-400 text-gray-700'
+              ? 'bg-green-100 text-green-800' 
+              : 'bg-gray-100 text-gray-700'
           }`}>
             {theme.is_active ? 'LIVE' : 'ENDED'}
           </span>
         </div>
 
-        <p className="text-gray-600 mb-8 leading-relaxed text-lg">{theme.description}</p>
+        <p className="text-gray-600 mb-6 leading-relaxed">{theme.description}</p>
 
-        {/* Stats section with enhanced design */}
-        <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-2xl p-6 mb-8 shadow-inner">
-          <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
-            <div className="flex items-center space-x-6">
-              <div className="flex items-center space-x-2 bg-white rounded-xl px-3 py-2 shadow-sm">
-                <Users className="h-5 w-5 text-indigo-500" />
+        {/* Simplified stats */}
+        <div className="bg-gray-50 rounded-xl p-4 mb-6">
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1">
+                <Users className="h-4 w-4 text-indigo-500" />
                 <span className="font-semibold">{theme.participants || 0} poets</span>
               </div>
-              <div className="flex items-center space-x-2 bg-white rounded-xl px-3 py-2 shadow-sm">
-                <FileText className="h-5 w-5 text-purple-500" />
+              <div className="flex items-center space-x-1">
+                <FileText className="h-4 w-4 text-purple-500" />
                 <span className="font-semibold">{theme.total_poems || 0} poems</span>
               </div>
             </div>
-            <div className="flex items-center space-x-2 bg-white rounded-xl px-3 py-2 shadow-sm">
-              <Clock className="h-5 w-5 text-amber-500" />
+            <div className="flex items-center space-x-1">
+              <Clock className="h-4 w-4 text-amber-500" />
               <span className="font-semibold">{formatTimeRemaining(theme.end_date)}</span>
             </div>
           </div>
         </div>
 
-        {/* Side options with enhanced styling */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex space-x-3">
-            <span className="px-4 py-2 bg-gradient-to-r from-emerald-100 to-emerald-200 text-emerald-800 rounded-full text-sm font-bold shadow-lg transform hover:scale-105 transition-all">
+        {/* Simplified side options */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex space-x-2">
+            <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
               {theme.duality_option_1}
             </span>
-            <span className="px-4 py-2 bg-gradient-to-r from-red-100 to-red-200 text-red-800 rounded-full text-sm font-bold shadow-lg transform hover:scale-105 transition-all">
+            <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
               {theme.duality_option_2}
             </span>
-            <span className="px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-200 text-gray-800 rounded-full text-sm font-bold shadow-lg transform hover:scale-105 transition-all">
+            <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
               Neutral
             </span>
           </div>
@@ -110,9 +110,9 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
         <Button
           onClick={() => onJoinBattle(theme.id)}
           disabled={!theme.is_active}
-          className={`w-full text-lg py-4 rounded-2xl font-bold shadow-xl transform hover:scale-105 transition-all duration-300 ${
+          className={`w-full text-lg py-3 rounded-xl font-bold shadow-soft ${
             theme.is_active
-              ? `bg-gradient-to-r ${getGradientColors(theme.title)} hover:shadow-2xl text-white`
+              ? `bg-gradient-to-r ${getGradientColors(theme.title)} text-white hover:shadow-medium`
               : 'bg-gray-100 text-gray-400 cursor-not-allowed'
           }`}
         >
@@ -120,7 +120,6 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
             <>
               <Crown className="h-5 w-5 mr-2" />
               Join Battle
-              <Zap className="h-5 w-5 ml-2" />
             </>
           ) : (
             'View Results'

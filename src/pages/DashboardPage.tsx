@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Plus, Search, Filter, TrendingUp, Sparkles, Crown, Zap, Users, FileText } from 'lucide-react';
+import { Plus, Search, Filter, TrendingUp, Sparkles, Crown, Users, FileText } from 'lucide-react';
 import { useThemes } from '../hooks/useThemes';
 import { useAuthStore } from '../stores/authStore';
 import ThemeCard from '../components/themes/ThemeCard';
@@ -38,39 +38,39 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-primary flex items-center justify-center">
         <div className="text-center">
           <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Loading poetry battles...</p>
+          <p className="mt-4 text-white">Loading poetry battles...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
+    <div className="min-h-screen bg-gradient-primary">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Enhanced Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12">
+        {/* Simplified Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div className="text-center sm:text-left">
-            <h1 className="text-6xl font-bold bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent mb-4 animate-float">
+            <h1 className="text-5xl font-bold text-white mb-4 animate-float">
               Poetry Battles
             </h1>
-            <p className="text-gray-600 text-xl">Choose your side and let your words do the fighting</p>
+            <p className="text-white/80 text-xl">Choose your side and let your words do the fighting</p>
             <div className="flex items-center justify-center sm:justify-start mt-4 space-x-4">
-              <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
-                <Users className="h-4 w-4 text-indigo-500" />
-                <span className="text-sm text-gray-600">{themes?.reduce((acc, theme) => acc + (theme.participants || 0), 0)} poets battling</span>
+              <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-light rounded-full px-4 py-2">
+                <Users className="h-4 w-4 text-white" />
+                <span className="text-sm text-white">{themes?.reduce((acc, theme) => acc + (theme.participants || 0), 0)} poets battling</span>
               </div>
-              <div className="flex items-center space-x-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg">
-                <FileText className="h-4 w-4 text-purple-500" />
-                <span className="text-sm text-gray-600">{themes?.reduce((acc, theme) => acc + (theme.total_poems || 0), 0)} poems written</span>
+              <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-light rounded-full px-4 py-2">
+                <FileText className="h-4 w-4 text-white" />
+                <span className="text-sm text-white">{themes?.reduce((acc, theme) => acc + (theme.total_poems || 0), 0)} poems written</span>
               </div>
             </div>
           </div>
           <Button
             onClick={() => setShowCreateTheme(true)}
-            className="mt-6 sm:mt-0 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-xl hover:shadow-2xl transform hover:scale-105 text-lg px-8 py-4"
+            className="mt-6 sm:mt-0 bg-white text-indigo-600 hover:bg-gray-50 shadow-medium text-lg px-8 py-4"
           >
             <Plus className="h-6 w-6 mr-2" />
             Create Battle
@@ -78,106 +78,85 @@ export default function DashboardPage() {
           </Button>
         </div>
 
-        {/* Enhanced Stats Cards with 3D effects */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-          <div className="bg-gradient-to-br from-indigo-500 via-purple-600 to-pink-600 p-8 rounded-3xl text-white shadow-2xl transform hover:scale-105 hover:rotate-1 transition-all duration-300 card-3d">
+        {/* Simplified Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="bg-white/10 backdrop-blur-light p-6 rounded-2xl text-white shadow-soft">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-indigo-100 text-lg">Your Points</p>
-                <p className="text-4xl font-bold">{user?.points || 0}</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-5 w-5 text-indigo-200 mr-1" />
-                  <span className="text-indigo-200 text-sm">+15 this week</span>
-                </div>
+                <p className="text-white/80">Your Points</p>
+                <p className="text-3xl font-bold">{user?.points || 0}</p>
               </div>
-              <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
-                <Crown className="h-10 w-10 text-white" />
-              </div>
+              <Crown className="h-8 w-8 text-white/60" />
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-emerald-500 via-teal-600 to-cyan-600 p-8 rounded-3xl text-white shadow-2xl transform hover:scale-105 hover:rotate-1 transition-all duration-300 card-3d">
+          <div className="bg-white/10 backdrop-blur-light p-6 rounded-2xl text-white shadow-soft">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-emerald-100 text-lg">Active Battles</p>
-                <p className="text-4xl font-bold">{themes?.filter(t => t.is_active).length || 0}</p>
-                <div className="flex items-center mt-2">
-                  <Zap className="h-5 w-5 text-emerald-200 mr-1" />
-                  <span className="text-emerald-200 text-sm">Join now!</span>
-                </div>
+                <p className="text-white/80">Active Battles</p>
+                <p className="text-3xl font-bold">{themes?.filter(t => t.is_active).length || 0}</p>
               </div>
-              <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
-                <Plus className="h-10 w-10 text-white" />
-              </div>
+              <Plus className="h-8 w-8 text-white/60" />
             </div>
           </div>
           
-          <div className="bg-gradient-to-br from-amber-500 via-orange-600 to-red-600 p-8 rounded-3xl text-white shadow-2xl transform hover:scale-105 hover:rotate-1 transition-all duration-300 card-3d">
+          <div className="bg-white/10 backdrop-blur-light p-6 rounded-2xl text-white shadow-soft">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-amber-100 text-lg">Your Level</p>
-                <p className="text-4xl font-bold">{user?.level || 1}</p>
-                <div className="flex items-center mt-2">
-                  <TrendingUp className="h-5 w-5 text-amber-200 mr-1" />
-                  <span className="text-amber-200 text-sm">Level up soon!</span>
-                </div>
+                <p className="text-white/80">Your Level</p>
+                <p className="text-3xl font-bold">{user?.level || 1}</p>
               </div>
-              <div className="bg-white/20 p-4 rounded-2xl backdrop-blur-sm">
-                <TrendingUp className="h-10 w-10 text-white" />
-              </div>
+              <TrendingUp className="h-8 w-8 text-white/60" />
             </div>
           </div>
         </div>
 
-        {/* Enhanced Search and Filter */}
-        <div className="flex flex-col sm:flex-row gap-6 mb-12">
+        {/* Simplified Search and Filter */}
+        <div className="flex flex-col sm:flex-row gap-4 mb-8">
           <div className="flex-1">
             <Input
               placeholder="Search battles by theme or description..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               icon={<Search className="h-5 w-5 text-gray-400" />}
-              className="text-lg py-4 rounded-2xl shadow-lg border-2 focus:border-indigo-400 bg-white/90 backdrop-blur-sm"
+              className="text-lg py-3 rounded-xl shadow-soft bg-white/90"
             />
           </div>
           <div className="relative">
             <select
               value={filterBy}
               onChange={(e) => setFilterBy(e.target.value as 'all' | 'active' | 'completed')}
-              className="pl-12 pr-8 py-4 border-2 border-gray-300 rounded-2xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white/90 backdrop-blur-sm shadow-lg text-lg font-medium"
+              className="pl-12 pr-8 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white/90 shadow-soft text-lg font-medium"
             >
               <option value="all">All Battles</option>
               <option value="active">Active Battles</option>
               <option value="completed">Completed Battles</option>
             </select>
-            <Filter className="absolute left-4 top-5 h-6 w-6 text-gray-400 pointer-events-none" />
+            <Filter className="absolute left-4 top-4 h-5 w-5 text-gray-400 pointer-events-none" />
           </div>
         </div>
 
         {/* Popular Battles Section */}
         {filteredThemes.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center space-x-2 mb-6">
-              <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-2 rounded-xl">
+          <div className="mb-6">
+            <div className="flex items-center space-x-2 mb-4">
+              <div className="bg-white/20 p-2 rounded-xl">
                 <TrendingUp className="h-5 w-5 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-white">
                 {filterBy === 'active' ? 'Most Popular Battles' : filterBy === 'completed' ? 'Recently Completed' : 'All Poetry Battles'}
               </h2>
-              <div className="bg-white/80 backdrop-blur-sm rounded-full px-3 py-1 shadow-sm">
-                <span className="text-sm text-gray-600">Sorted by popularity</span>
-              </div>
             </div>
           </div>
         )}
 
-        {/* Enhanced Theme Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {/* Simplified Theme Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredThemes.map((theme, index) => (
             <div
               key={theme.id}
-              className="animate-slideInUp"
-              style={{ animationDelay: `${index * 0.1}s` }}
+              className="animate-fadeIn"
+              style={{ animationDelay: `${index * 0.05}s` }}
             >
               <ThemeCard
                 theme={theme}
@@ -188,16 +167,15 @@ export default function DashboardPage() {
         </div>
 
         {filteredThemes.length === 0 && (
-          <div className="text-center py-20">
-            <div className="bg-gradient-to-r from-gray-100 to-gray-200 rounded-full w-32 h-32 flex items-center justify-center mx-auto mb-8 shadow-2xl">
-              <Search className="h-16 w-16 text-gray-400" />
+          <div className="text-center py-16">
+            <div className="bg-white/20 rounded-full w-24 h-24 flex items-center justify-center mx-auto mb-6">
+              <Search className="h-12 w-12 text-white" />
             </div>
-            <p className="text-gray-500 text-2xl mb-6">No battles found matching your criteria.</p>
+            <p className="text-white text-xl mb-4">No battles found matching your criteria.</p>
             <Button
               onClick={() => setShowCreateTheme(true)}
               variant="outline"
-              size="lg"
-              className="transform hover:scale-105 shadow-lg bg-white/80 backdrop-blur-sm"
+              className="bg-white/20 text-white border-white/30 hover:bg-white/30"
             >
               <Plus className="h-5 w-5 mr-2" />
               Create the first one!
