@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { PenTool, Send } from 'lucide-react';
+import { PenTool, Send, Lightbulb, Sparkles } from 'lucide-react';
 import { useCreatePoem } from '../../hooks/usePoems';
 import { useAuthStore } from '../../stores/authStore';
 import { Theme } from '../../types';
@@ -23,6 +23,7 @@ interface PoemFormData {
 export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemModalProps) {
   const { user } = useAuthStore();
   const createPoem = useCreatePoem();
+  const [showInspiration, setShowInspiration] = useState(false);
 
   const {
     register,
@@ -30,6 +31,7 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
     formState: { errors },
     reset,
     watch,
+    setValue,
   } = useForm<PoemFormData>({
     defaultValues: {
       side: 'neutral',
@@ -37,6 +39,45 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
   });
 
   const selectedSide = watch('side');
+
+  // Poem inspiration suggestions based on theme
+  const getInspiration = () => {
+    const inspirations = {
+      'Fire': [
+        'Flames dance in the night,\nWarming hearts with golden light,\nFriend to those in need.',
+        'Blazing fury burns,\nDestroying all in its path,\nFoe of peaceful dreams.',
+        'Fire speaks in tongues,\nBoth creator and destroyer,\nNature\'s dual essence.'
+      ],
+      'Time': [
+        'Past whispers softly,\nLessons learned in yesterday,\nWisdom\'s gentle guide.',
+        'Future calls ahead,\nPromises of what could be,\nHope\'s eternal flame.',
+        'Time flows like water,\nPast and future intertwined,\nPresent moment\'s gift.'
+      ],
+      'Ocean': [
+        'Gentle waves caress,\nPeaceful blue expanse of calm,\nSoul\'s tranquil refuge.',
+        'Tempest rages wild,\nCrashing waves destroy the shore,\nNature\'s mighty wrath.',
+        'Ocean holds secrets,\nCalm surface, depths unknown,\nMystery eternal.'
+      ]
+    };
+
+    const themeKey = Object.keys(inspirations).find(key => 
+      theme.title.toLowerCase().includes(key.toLowerCase())
+    );
+    
+    return themeKey ? inspirations[themeKey as keyof typeof inspirations] : [
+      'Words flow like rivers,\nCarrying thoughts to new shores,\nPoetry\'s sweet gift.',
+      'Silence speaks volumes,\nIn the space between heartbeats,\nTruth finds its voice.',
+      'Dreams paint the darkness,\nWith colors of possibility,\nHope\'s canvas unfolds.'
+    ];
+  };
+
+  const handleInspiration = () => {
+    const inspirations = getInspiration();
+    const randomInspiration = inspirations[Math.floor(Math.random() * inspirations.length)];
+    setValue('content', randomInspiration);
+    setShowInspiration(true);
+    setTimeout(() => setShowInspiration(false), 2000);
+  };
 
   const onSubmit = async (data: PoemFormData) => {
     if (!user) return;
@@ -59,37 +100,40 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
       value: 'option_1' as const, 
       label: theme.duality_option_1, 
       color: 'emerald', 
-      description: `Embrace ${theme.duality_option_1.toLowerCase()}` 
+      description: `Embrace ${theme.duality_option_1.toLowerCase()}`,
+      gradient: 'from-emerald-400 to-emerald-600'
     },
     { 
       value: 'option_2' as const, 
       label: theme.duality_option_2, 
       color: 'red', 
-      description: `Challenge ${theme.duality_option_2.toLowerCase()}` 
+      description: `Challenge ${theme.duality_option_2.toLowerCase()}`,
+      gradient: 'from-red-400 to-red-600'
     },
     { 
       value: 'neutral' as const, 
       label: 'Neutral', 
       color: 'gray', 
-      description: 'Take a balanced perspective' 
+      description: 'Take a balanced perspective',
+      gradient: 'from-gray-400 to-gray-600'
     },
   ];
 
   const getColorClasses = (color: string, selected: boolean) => {
-    const baseClasses = 'p-4 rounded-lg border-2 cursor-pointer transition-all';
+    const baseClasses = 'p-6 rounded-2xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 card-hover';
     switch (color) {
       case 'emerald':
         return `${baseClasses} ${selected 
-          ? 'border-emerald-500 bg-emerald-50' 
-          : 'border-emerald-200 hover:border-emerald-300'}`;
+          ? 'border-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100 shadow-xl shadow-emerald-500/25' 
+          : 'border-emerald-200 hover:border-emerald-300 hover:bg-emerald-50'}`;
       case 'red':
         return `${baseClasses} ${selected 
-          ? 'border-red-500 bg-red-50' 
-          : 'border-red-200 hover:border-red-300'}`;
+          ? 'border-red-500 bg-gradient-to-br from-red-50 to-red-100 shadow-xl shadow-red-500/25' 
+          : 'border-red-200 hover:border-red-300 hover:bg-red-50'}`;
       case 'gray':
         return `${baseClasses} ${selected 
-          ? 'border-gray-500 bg-gray-50' 
-          : 'border-gray-200 hover:border-gray-300'}`;
+          ? 'border-gray-500 bg-gradient-to-br from-gray-50 to-gray-100 shadow-xl shadow-gray-500/25' 
+          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`;
       default:
         return baseClasses;
     }
@@ -102,17 +146,17 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
       title="Create Your Poem"
       size="lg"
     >
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">{theme.title}</h3>
-        <p className="text-sm text-gray-600">{theme.description}</p>
+      <div className="mb-6 p-6 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-200">
+        <h3 className="text-xl font-bold text-gray-900 mb-2">{theme.title}</h3>
+        <p className="text-gray-600">{theme.description}</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-lg font-semibold text-gray-700 mb-4">
             Choose Your Perspective
           </label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {sideOptions.map((option) => (
               <label
                 key={option.value}
@@ -125,10 +169,15 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
                   className="sr-only"
                 />
                 <div className="text-center">
-                  <h3 className="font-semibold text-gray-900">{option.label}</h3>
-                  <p className="text-xs text-gray-600 mt-1">{option.description}</p>
+                  <div className={`w-12 h-12 mx-auto mb-3 rounded-full bg-gradient-to-r ${option.gradient} flex items-center justify-center shadow-lg`}>
+                    <span className="text-white font-bold text-lg">
+                      {option.label.charAt(0)}
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-gray-900 text-lg">{option.label}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{option.description}</p>
                   {option.value === 'neutral' && (
-                    <p className="text-xs text-amber-600 mt-1 font-medium">
+                    <p className="text-xs text-amber-600 mt-2 font-medium bg-amber-50 px-2 py-1 rounded-full">
                       (Participates but cannot win)
                     </p>
                   )}
@@ -137,7 +186,7 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
             ))}
           </div>
           {errors.side && (
-            <p className="text-sm text-red-600 mt-1">{errors.side.message}</p>
+            <p className="text-sm text-red-600 mt-2">{errors.side.message}</p>
           )}
         </div>
 
@@ -151,13 +200,27 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
             },
           })}
           error={errors.title?.message}
-          placeholder="Give your poem a title..."
+          placeholder="Give your poem a captivating title..."
+          className="text-lg"
         />
 
-        <div className="space-y-1">
-          <label className="block text-sm font-medium text-gray-700">
-            Your Poem
-          </label>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="block text-lg font-semibold text-gray-700">
+              Your Poem
+            </label>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleInspiration}
+              className={`transition-all duration-300 ${showInspiration ? 'animate-popUp bg-yellow-50 border-yellow-300' : ''}`}
+            >
+              <Lightbulb className={`h-4 w-4 mr-2 ${showInspiration ? 'text-yellow-600' : ''}`} />
+              Get Inspired
+              {showInspiration && <Sparkles className="h-4 w-4 ml-1 text-yellow-600" />}
+            </Button>
+          </div>
           <textarea
             {...register('content', {
               required: 'Poem content is required',
@@ -167,7 +230,7 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
               },
             })}
             rows={8}
-            className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 font-mono leading-6"
+            className="block w-full px-4 py-3 border border-gray-300 rounded-2xl focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 font-serif leading-7 text-lg shadow-inner bg-gradient-to-br from-white to-gray-50"
             placeholder="Write your poem here... 
 
 Example haiku:
@@ -178,17 +241,24 @@ Friend to those in need"
           {errors.content && (
             <p className="text-sm text-red-600">{errors.content.message}</p>
           )}
-          <p className="text-xs text-gray-500">
-            Tip: Haikus work great! 3 lines with 5-7-5 syllables
-          </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+            <p className="text-sm text-blue-800">
+              <strong>💡 Tip:</strong> Haikus work great! Try 3 lines with 5-7-5 syllables, or express yourself freely in any poetic form.
+            </p>
+          </div>
         </div>
 
-        <div className="flex justify-end space-x-3">
-          <Button type="button" variant="outline" onClick={onClose}>
+        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <Button type="button" variant="outline" onClick={onClose} size="lg">
             Cancel
           </Button>
-          <Button type="submit" loading={createPoem.isPending}>
-            <Send className="h-4 w-4 mr-2" />
+          <Button 
+            type="submit" 
+            loading={createPoem.isPending} 
+            size="lg"
+            className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            <Send className="h-5 w-5 mr-2" />
             Submit Poem
           </Button>
         </div>
