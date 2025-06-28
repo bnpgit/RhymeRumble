@@ -28,7 +28,15 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
     formState: { errors },
     watch,
     reset,
-  } = useForm<FormData>();
+  } = useForm<FormData>({
+    mode: 'onChange',
+    defaultValues: {
+      email: '',
+      password: '',
+      username: '',
+      confirmPassword: '',
+    },
+  });
 
   const password = watch('password');
 
@@ -38,11 +46,14 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
       if (mode === 'signin') {
         await signIn(data.email, data.password);
       } else {
-        await signUp(data.email, data.password, data.username!);
+        if (!data.username) {
+          throw new Error('Username is required');
+        }
+        await signUp(data.email, data.password, data.username);
         reset();
       }
     } catch (error) {
-      // Error is handled in the store
+      console.error('Auth error:', error);
     } finally {
       setLoading(false);
     }
@@ -63,77 +74,128 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {mode === 'signup' && (
-          <Input
-            label="Username"
-            icon={<User className="h-5 w-5 text-gray-400" />}
-            {...register('username', {
-              required: 'Username is required',
-              minLength: {
-                value: 3,
-                message: 'Username must be at least 3 characters',
-              },
-              pattern: {
-                value: /^[a-zA-Z0-9_]+$/,
-                message: 'Username can only contain letters, numbers, and underscores',
-              },
-            })}
-            error={errors.username?.message}
-            placeholder="Choose your poet name"
-          />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Username
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <input
+                type="text"
+                {...register('username', {
+                  required: mode === 'signup' ? 'Username is required' : false,
+                  minLength: {
+                    value: 3,
+                    message: 'Username must be at least 3 characters',
+                  },
+                  pattern: {
+                    value: /^[a-zA-Z0-9_]+$/,
+                    message: 'Username can only contain letters, numbers, and underscores',
+                  },
+                })}
+                className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                  errors.username
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
+                }`}
+                placeholder="Choose your poet name"
+              />
+            </div>
+            {errors.username && (
+              <p className="text-sm text-red-600">{errors.username.message}</p>
+            )}
+          </div>
         )}
 
-        <Input
-          label="Email"
-          type="email"
-          icon={<Mail className="h-5 w-5 text-gray-400" />}
-          {...register('email', {
-            required: 'Email is required',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Invalid email address',
-            },
-          })}
-          error={errors.email?.message}
-          placeholder="Enter your email"
-        />
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Email
+          </label>
+          <div className="relative">
+            <Mail className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type="email"
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Invalid email address',
+                },
+              })}
+              className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                errors.email
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
+              }`}
+              placeholder="Enter your email"
+            />
+          </div>
+          {errors.email && (
+            <p className="text-sm text-red-600">{errors.email.message}</p>
+          )}
+        </div>
 
-        <div className="relative">
-          <Input
-            label="Password"
-            type={showPassword ? 'text' : 'password'}
-            icon={<Lock className="h-5 w-5 text-gray-400" />}
-            {...register('password', {
-              required: 'Password is required',
-              minLength: {
-                value: 6,
-                message: 'Password must be at least 6 characters',
-              },
-            })}
-            error={errors.password?.message}
-            placeholder="Enter your password"
-          />
-          <button
-            type="button"
-            className="absolute right-3 top-8 text-gray-400 hover:text-gray-600"
-            onClick={() => setShowPassword(!showPassword)}
-          >
-            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-          </button>
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-gray-700">
+            Password
+          </label>
+          <div className="relative">
+            <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+            <input
+              type={showPassword ? 'text' : 'password'}
+              {...register('password', {
+                required: 'Password is required',
+                minLength: {
+                  value: 6,
+                  message: 'Password must be at least 6 characters',
+                },
+              })}
+              className={`block w-full pl-10 pr-10 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                errors.password
+                  ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                  : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
+              }`}
+              placeholder="Enter your password"
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-sm text-red-600">{errors.password.message}</p>
+          )}
         </div>
 
         {mode === 'signup' && (
-          <Input
-            label="Confirm Password"
-            type={showPassword ? 'text' : 'password'}
-            icon={<Lock className="h-5 w-5 text-gray-400" />}
-            {...register('confirmPassword', {
-              required: 'Please confirm your password',
-              validate: (value) =>
-                value === password || 'Passwords do not match',
-            })}
-            error={errors.confirmPassword?.message}
-            placeholder="Confirm your password"
-          />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+              <input
+                type={showPassword ? 'text' : 'password'}
+                {...register('confirmPassword', {
+                  required: mode === 'signup' ? 'Please confirm your password' : false,
+                  validate: (value) =>
+                    mode === 'signup' && value !== password ? 'Passwords do not match' : true,
+                })}
+                className={`block w-full pl-10 pr-3 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                  errors.confirmPassword
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:border-indigo-500 focus:ring-indigo-500'
+                }`}
+                placeholder="Confirm your password"
+              />
+            </div>
+            {errors.confirmPassword && (
+              <p className="text-sm text-red-600">{errors.confirmPassword.message}</p>
+            )}
+          </div>
         )}
 
         <Button
