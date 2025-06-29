@@ -16,6 +16,10 @@ export default function AuthPage() {
     const modeParam = searchParams.get('mode');
     if (modeParam === 'signup' || modeParam === 'signin') {
       setMode(modeParam);
+    } else if (modeParam === 'reset-password') {
+      // Handle password reset redirect
+      setMode('signin');
+      // You could show a password reset form here if needed
     }
   }, [searchParams]);
 

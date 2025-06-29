@@ -23,12 +23,33 @@ export const usePoems = (themeId?: string) => {
 
       if (error) throw error;
 
+      // Get current user to check likes
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user && data) {
+        // Get user's likes for these poems
+        const poemIds = data.map(poem => poem.id);
+        const { data: likes } = await supabase
+          .from('poem_likes')
+          .select('poem_id')
+          .eq('user_id', user.id)
+          .in('poem_id', poemIds);
+
+        const likedPoemIds = new Set(likes?.map(like => like.poem_id) || []);
+
+        return data.map((poem: any) => ({
+          ...poem,
+          author: poem.profiles,
+          is_liked: likedPoemIds.has(poem.id),
+        })) as Poem[];
+      }
+
       return data.map((poem: any) => ({
         ...poem,
         author: poem.profiles,
+        is_liked: false,
       })) as Poem[];
     },
-    enabled: !!themeId,
   });
 };
 
@@ -46,16 +67,28 @@ export const useCreatePoem = () => {
       const { data, error } = await supabase
         .from('poems')
         .insert(poemData)
-        .select()
+        .select(`
+          *,
+          profiles!poems_author_id_fkey(username, avatar_url)
+        `)
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
+      // Invalidate and refetch poems for this theme
       queryClient.invalidateQueries({ queryKey: ['poems', variables.theme_id] });
+      queryClient.invalidateQueries({ queryKey: ['poems'] });
       queryClient.invalidateQueries({ queryKey: ['themes'] });
-      toast.success('Poem submitted successfully!');
+      
+      // Add the new poem to the cache immediately for better UX
+      queryClient.setQueryData(['poems', variables.theme_id], (oldData: any) => {
+        if (!oldData) return [{ ...data, author: data.profiles, is_liked: false }];
+        return [{ ...data, author: data.profiles, is_liked: false }, ...oldData];
+      });
+      
+      toast.success('🎉 Your poem has been published! Everyone can now read it.');
     },
     onError: (error) => {
       const message = handleSupabaseError(error);
@@ -84,9 +117,10 @@ export const useLikePoem = () => {
         if (error) throw error;
 
         // Decrement likes count
-        const { error: updateError } = await supabase.rpc('decrement_likes', {
-          poem_id: poemId,
-        });
+        const { error: updateError } = await supabase
+          .from('poems')
+          .update({ likes_count: supabase.sql`likes_count - 1` })
+          .eq('id', poemId);
 
         if (updateError) throw updateError;
       } else {
@@ -98,9 +132,10 @@ export const useLikePoem = () => {
         if (error) throw error;
 
         // Increment likes count
-        const { error: updateError } = await supabase.rpc('increment_likes', {
-          poem_id: poemId,
-        });
+        const { error: updateError } = await supabase
+          .from('poems')
+          .update({ likes_count: supabase.sql`likes_count + 1` })
+          .eq('id', poemId);
 
         if (updateError) throw updateError;
       }

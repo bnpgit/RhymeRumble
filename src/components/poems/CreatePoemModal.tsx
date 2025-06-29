@@ -96,10 +96,9 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
       });
       reset();
       onClose();
-      toast.success('🎉 Your poem has been submitted successfully!');
     } catch (error) {
       console.error('Error creating poem:', error);
-      toast.error('Failed to submit poem. Please try again.');
+      // Error is already handled in the mutation
     }
   };
 
@@ -267,7 +266,7 @@ Friend to those in need"
             className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             <Send className="h-5 w-5 mr-2" />
-            Submit Poem
+            Publish Poem
           </Button>
         </div>
       </form>
