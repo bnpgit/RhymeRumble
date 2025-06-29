@@ -167,18 +167,18 @@ export default function LeaderboardPage() {
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
-      case 1: return <Crown className="h-6 w-6 text-yellow-500" />;
-      case 2: return <Trophy className="h-6 w-6 text-gray-400" />;
-      case 3: return <Medal className="h-6 w-6 text-amber-600" />;
+      case 1: return <Crown className="h-6 w-6 text-yellow-400" />;
+      case 2: return <Trophy className="h-6 w-6 text-gray-300" />;
+      case 3: return <Medal className="h-6 w-6 text-orange-400" />;
       default: return <Award className="h-5 w-5 text-gray-400" />;
     }
   };
 
   const getRankColor = (rank: number) => {
     switch (rank) {
-      case 1: return 'bg-gradient-to-r from-yellow-400 to-yellow-500 shadow-medium';
-      case 2: return 'bg-gradient-to-r from-gray-300 to-gray-400 shadow-medium';
-      case 3: return 'bg-gradient-to-r from-amber-400 to-amber-500 shadow-medium';
+      case 1: return 'bg-gradient-to-r from-yellow-400 via-yellow-500 to-amber-500 shadow-xl';
+      case 2: return 'bg-gradient-to-r from-gray-300 via-gray-400 to-slate-400 shadow-xl';
+      case 3: return 'bg-gradient-to-r from-orange-400 via-amber-500 to-yellow-500 shadow-xl';
       default: return 'bg-gradient-to-r from-gray-100 to-gray-200';
     }
   };
@@ -198,31 +198,31 @@ export default function LeaderboardPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-primary">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center mb-8">
-          <h1 className="text-5xl font-bold text-white mb-4 animate-float">
+          <h1 className="text-6xl font-bold bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text text-transparent mb-4 animate-float">
             Hall of Fame
           </h1>
-          <p className="text-white/80 text-xl">Celebrating our most talented poets</p>
+          <p className="text-white/90 text-xl font-medium">Celebrating our most talented poets</p>
           <div className="flex justify-center mt-4">
-            <div className="flex items-center space-x-2 bg-white/20 backdrop-blur-light rounded-full px-4 py-2">
-              <Sparkles className="h-4 w-4 text-white" />
-              <span className="text-sm text-white">Rankings update in real-time</span>
+            <div className="flex items-center space-x-2 bg-gradient-to-r from-pink-400 to-rose-500 rounded-full px-6 py-3 shadow-lg">
+              <Sparkles className="h-5 w-5 text-white" />
+              <span className="text-white font-semibold">Rankings update in real-time</span>
             </div>
           </div>
         </div>
 
-        {/* Simplified Tabs */}
+        {/* Colorful Tabs */}
         <div className="flex justify-center mb-8">
-          <div className="flex space-x-2 bg-white/20 backdrop-blur-light p-2 rounded-xl shadow-soft">
+          <div className="flex space-x-2 bg-white/20 backdrop-blur-sm p-2 rounded-2xl shadow-xl border border-white/30">
             {tabs.map(({ id, label, icon: Icon }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
                   activeTab === id
-                    ? 'bg-white text-indigo-600 shadow-soft'
+                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white shadow-lg transform scale-105'
                     : 'text-white hover:text-white hover:bg-white/10'
                 }`}
               >
@@ -233,7 +233,7 @@ export default function LeaderboardPage() {
           </div>
         </div>
 
-        {/* Simplified Top 3 Podium */}
+        {/* Colorful Top 3 Podium */}
         {(activeTab === 'overall' || activeTab === 'monthly') && (
           <div className="mb-8">
             <div className="flex justify-center items-end space-x-6 mb-8">
@@ -242,23 +242,23 @@ export default function LeaderboardPage() {
                 <div className={`${getRankColor(2)} p-4 rounded-full mb-3 inline-flex items-center justify-center`}>
                   <span className="text-2xl">{sortedLeaders[1]?.avatar}</span>
                 </div>
-                <div className="bg-white/90 backdrop-blur-light p-4 rounded-xl shadow-soft min-w-[120px]">
-                  <Trophy className="h-6 w-6 text-gray-400 mx-auto mb-2" />
+                <div className="bg-gradient-to-br from-slate-100 to-gray-200 p-4 rounded-xl shadow-xl min-w-[120px] border-2 border-gray-300">
+                  <Trophy className="h-6 w-6 text-gray-500 mx-auto mb-2" />
                   <h3 className="font-bold text-gray-900">{sortedLeaders[1]?.username}</h3>
-                  <p className="text-sm text-gray-600">{sortedLeaders[1]?.points} pts</p>
+                  <p className="text-sm text-gray-600 font-semibold">{sortedLeaders[1]?.points} pts</p>
                 </div>
               </div>
 
               {/* 1st Place */}
               <div className="text-center animate-slideInUp">
-                <div className={`${getRankColor(1)} p-6 rounded-full mb-3 inline-flex items-center justify-center`}>
+                <div className={`${getRankColor(1)} p-6 rounded-full mb-3 inline-flex items-center justify-center transform scale-110`}>
                   <span className="text-3xl">{sortedLeaders[0]?.avatar}</span>
                 </div>
-                <div className="bg-white/90 backdrop-blur-light p-6 rounded-xl shadow-medium min-w-[140px]">
-                  <Crown className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
+                <div className="bg-gradient-to-br from-yellow-100 to-amber-200 p-6 rounded-xl shadow-2xl min-w-[140px] border-3 border-yellow-400">
+                  <Crown className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
                   <h3 className="font-bold text-gray-900 text-lg">{sortedLeaders[0]?.username}</h3>
-                  <p className="text-gray-600 font-bold">{sortedLeaders[0]?.points} pts</p>
-                  <p className="text-xs text-gray-500">Level {sortedLeaders[0]?.level}</p>
+                  <p className="text-gray-700 font-bold">{sortedLeaders[0]?.points} pts</p>
+                  <p className="text-xs text-gray-600">Level {sortedLeaders[0]?.level}</p>
                 </div>
               </div>
 
@@ -267,10 +267,10 @@ export default function LeaderboardPage() {
                 <div className={`${getRankColor(3)} p-4 rounded-full mb-3 inline-flex items-center justify-center`}>
                   <span className="text-2xl">{sortedLeaders[2]?.avatar}</span>
                 </div>
-                <div className="bg-white/90 backdrop-blur-light p-4 rounded-xl shadow-soft min-w-[120px]">
-                  <Medal className="h-6 w-6 text-amber-600 mx-auto mb-2" />
+                <div className="bg-gradient-to-br from-orange-100 to-amber-200 p-4 rounded-xl shadow-xl min-w-[120px] border-2 border-orange-400">
+                  <Medal className="h-6 w-6 text-orange-600 mx-auto mb-2" />
                   <h3 className="font-bold text-gray-900">{sortedLeaders[2]?.username}</h3>
-                  <p className="text-sm text-gray-600">{sortedLeaders[2]?.points} pts</p>
+                  <p className="text-sm text-gray-600 font-semibold">{sortedLeaders[2]?.points} pts</p>
                 </div>
               </div>
             </div>
@@ -285,12 +285,12 @@ export default function LeaderboardPage() {
               return (
                 <div
                   key={battle.id}
-                  className="bg-white/90 backdrop-blur-light rounded-xl shadow-soft p-6 card-hover animate-fadeIn"
+                  className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 transform hover:scale-105 transition-all duration-200 animate-fadeIn border border-white/50"
                   style={{ animationDelay: `${index * 0.1}s` }}
                 >
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className={`bg-gradient-to-r ${battle.gradient} p-3 rounded-xl shadow-soft`}>
+                      <div className={`bg-gradient-to-r ${battle.gradient} p-3 rounded-xl shadow-lg`}>
                         <IconComponent className="h-6 w-6 text-white" />
                       </div>
                       <div>
@@ -298,12 +298,12 @@ export default function LeaderboardPage() {
                         <p className="text-sm text-gray-500">{battle.endDate}</p>
                       </div>
                     </div>
-                    <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                    <span className="px-3 py-1 bg-gradient-to-r from-green-400 to-emerald-500 text-white rounded-full text-sm font-bold shadow-lg">
                       {battle.winningSide} Won
                     </span>
                   </div>
                   
-                  <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  <div className="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-4">
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-gray-600">Champion Poet</p>
@@ -317,9 +317,9 @@ export default function LeaderboardPage() {
                   </div>
                   
                   <div className="flex items-center justify-between text-sm text-gray-500">
-                    <span>{battle.totalParticipants} participants</span>
+                    <span className="font-medium">{battle.totalParticipants} participants</span>
                     <span className="flex items-center space-x-1">
-                      <Heart className="h-4 w-4" />
+                      <Heart className="h-4 w-4 text-red-500" />
                       <span>Battle completed</span>
                     </span>
                   </div>
@@ -329,12 +329,12 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {/* Simplified Full Leaderboard */}
+        {/* Colorful Full Leaderboard */}
         {(activeTab === 'overall' || activeTab === 'monthly') && (
-          <div className="bg-white/90 backdrop-blur-light rounded-xl shadow-soft overflow-hidden">
-            <div className="px-6 py-4 bg-white/50 border-b border-gray-200">
-              <h2 className="text-lg font-bold text-gray-900">Full Rankings</h2>
-              <p className="text-sm text-gray-600 mt-1">
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl overflow-hidden border border-white/50">
+            <div className="px-6 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 text-white">
+              <h2 className="text-lg font-bold">Full Rankings</h2>
+              <p className="text-sm text-indigo-100 mt-1">
                 Rankings based on overall contribution and community engagement
               </p>
             </div>
@@ -346,9 +346,9 @@ export default function LeaderboardPage() {
                 return (
                   <div
                     key={leader.id}
-                    className={`px-6 py-4 flex items-center justify-between card-hover animate-fadeIn ${
+                    className={`px-6 py-4 flex items-center justify-between transform hover:scale-[1.01] transition-all duration-200 animate-fadeIn ${
                       isCurrentUser 
-                        ? 'bg-indigo-50 border-l-4 border-indigo-400' 
+                        ? 'bg-gradient-to-r from-indigo-50 to-purple-50 border-l-4 border-indigo-500' 
                         : 'hover:bg-gray-50'
                     }`}
                     style={{ animationDelay: `${index * 0.05}s` }}
@@ -360,37 +360,37 @@ export default function LeaderboardPage() {
                       <div className="text-lg font-bold text-gray-400 w-8">
                         #{rank}
                       </div>
-                      <div className="bg-gray-100 p-2 rounded-full">
+                      <div className="bg-gradient-to-r from-gray-100 to-gray-200 p-2 rounded-full shadow-sm">
                         <span className="text-lg">{leader.avatar || '👤'}</span>
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
                           <h3 className={`font-bold ${isCurrentUser ? 'text-indigo-900' : 'text-gray-900'}`}>
                             {leader.username}
-                            {isCurrentUser && <span className="ml-2 text-sm text-indigo-600">(You)</span>}
+                            {isCurrentUser && <span className="ml-2 text-sm text-indigo-600 font-bold">(You)</span>}
                           </h3>
                           <span className="text-sm">{getTrendIcon(leader.trend)}</span>
                         </div>
-                        <p className="text-sm text-gray-600">Level {leader.level}</p>
+                        <p className="text-sm text-gray-600 font-medium">Level {leader.level}</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-6 text-sm text-gray-600">
                       <div className="text-center">
                         <p className="font-bold text-gray-900">{leader.points}</p>
-                        <p>Points</p>
+                        <p className="font-medium">Points</p>
                       </div>
                       <div className="text-center">
                         <p className="font-bold text-gray-900">{leader.poemsWritten}</p>
-                        <p>Poems</p>
+                        <p className="font-medium">Poems</p>
                       </div>
                       <div className="text-center">
                         <p className="font-bold text-gray-900">{leader.totalLikes}</p>
-                        <p>Likes</p>
+                        <p className="font-medium">Likes</p>
                       </div>
                       <div className="text-center">
                         <p className="font-bold text-gray-900">{leader.battlesWon}</p>
-                        <p>Wins</p>
+                        <p className="font-medium">Wins</p>
                       </div>
                     </div>
                   </div>
@@ -400,29 +400,29 @@ export default function LeaderboardPage() {
           </div>
         )}
 
-        {/* Simplified Your Stats */}
+        {/* Colorful Your Stats */}
         {user && (
-          <div className="mt-8 bg-white/20 backdrop-blur-light rounded-xl p-6 text-white shadow-soft">
+          <div className="mt-8 bg-gradient-to-r from-rose-500 via-pink-500 to-purple-600 rounded-2xl p-6 text-white shadow-2xl">
             <h3 className="text-xl font-bold mb-4 flex items-center">
               <Sparkles className="h-5 w-5 mr-2" />
               Your Journey
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center bg-white/10 rounded-xl p-4">
-                <p className="text-2xl font-bold">{user.points}</p>
-                <p className="text-white/80">Total Points</p>
+              <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 shadow-lg">
+                <p className="text-3xl font-bold">{user.points}</p>
+                <p className="text-pink-100 font-medium">Total Points</p>
               </div>
-              <div className="text-center bg-white/10 rounded-xl p-4">
-                <p className="text-2xl font-bold">{user.level}</p>
-                <p className="text-white/80">Level</p>
+              <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 shadow-lg">
+                <p className="text-3xl font-bold">{user.level}</p>
+                <p className="text-pink-100 font-medium">Level</p>
               </div>
-              <div className="text-center bg-white/10 rounded-xl p-4">
-                <p className="text-2xl font-bold">5</p>
-                <p className="text-white/80">Battles Won</p>
+              <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 shadow-lg">
+                <p className="text-3xl font-bold">5</p>
+                <p className="text-pink-100 font-medium">Battles Won</p>
               </div>
-              <div className="text-center bg-white/10 rounded-xl p-4">
-                <p className="text-2xl font-bold">12</p>
-                <p className="text-white/80">Poems Written</p>
+              <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 shadow-lg">
+                <p className="text-3xl font-bold">12</p>
+                <p className="text-pink-100 font-medium">Poems Written</p>
               </div>
             </div>
           </div>

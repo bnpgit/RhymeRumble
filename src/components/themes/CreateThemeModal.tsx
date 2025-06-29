@@ -105,10 +105,10 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
     >
       <div className="space-y-8">
         {/* Enhanced Inspiration Section */}
-        <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 rounded-2xl p-6 border border-purple-200">
+        <div className="bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 rounded-2xl p-6 border-2 border-purple-200">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
-              <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-2 rounded-xl">
+              <div className="bg-gradient-to-r from-purple-500 to-indigo-600 p-2 rounded-xl shadow-lg">
                 <Lightbulb className="h-5 w-5 text-white" />
               </div>
               <h3 className="text-lg font-bold text-gray-900">Get Inspired</h3>
@@ -118,14 +118,14 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
               variant="outline"
               size="sm"
               onClick={generateRandomExample}
-              className="bg-white/80 hover:bg-white border-purple-300 text-purple-700 hover:text-purple-800"
+              className="bg-white/80 hover:bg-white border-purple-300 text-purple-700 hover:text-purple-800 font-bold shadow-lg"
             >
               <Wand2 className="h-4 w-4 mr-2" />
               Random Theme
             </Button>
           </div>
           
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-gray-600 mb-4 font-medium">
             Click any example below to auto-fill the form, or use the random button for surprise inspiration!
           </p>
           
@@ -135,12 +135,12 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
                 key={index}
                 type="button"
                 onClick={() => fillExample(example)}
-                className="text-left p-4 bg-white/70 hover:bg-white border border-purple-200 rounded-xl hover:border-purple-300 hover:shadow-lg transition-all duration-300 transform hover:scale-105 group"
+                className="text-left p-4 bg-white/70 hover:bg-white border-2 border-purple-200 rounded-xl hover:border-purple-300 hover:shadow-lg transition-all duration-200 transform hover:scale-105 group"
               >
-                <div className="font-semibold text-gray-900 group-hover:text-purple-700 transition-colors">
+                <div className="font-bold text-gray-900 group-hover:text-purple-700 transition-colors">
                   {example.title}
                 </div>
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 mt-1 font-medium">
                   {example.sides[0]} vs {example.sides[1]}
                 </div>
                 <div className="text-xs text-gray-600 mt-2 line-clamp-2">
@@ -163,7 +163,7 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
             })}
             error={errors.title?.message}
             placeholder="e.g., Fire: Friend or Foe"
-            className="text-lg font-medium"
+            className="text-lg font-medium border-2 border-gray-300 focus:border-purple-500"
           />
 
           <div className="grid grid-cols-2 gap-4">
@@ -174,7 +174,7 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
               })}
               error={errors.duality_option_1?.message}
               placeholder="e.g., Friend"
-              className="font-medium"
+              className="font-medium border-2 border-gray-300 focus:border-purple-500"
             />
             <Input
               label="Second Perspective"
@@ -183,12 +183,12 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
               })}
               error={errors.duality_option_2?.message}
               placeholder="e.g., Foe"
-              className="font-medium"
+              className="font-medium border-2 border-gray-300 focus:border-purple-500"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-bold text-gray-700">
               Battle Description
             </label>
             <textarea
@@ -200,11 +200,11 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
                 },
               })}
               rows={4}
-              className="block w-full px-4 py-3 border border-gray-300 rounded-xl focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 leading-6"
+              className="block w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-purple-500 focus:outline-none focus:ring-2 focus:ring-purple-500/20 leading-6"
               placeholder="Describe the theme and inspire poets to participate. What makes this duality interesting and thought-provoking?"
             />
             {errors.description && (
-              <p className="text-sm text-red-600">{errors.description.message}</p>
+              <p className="text-sm text-red-600 font-medium">{errors.description.message}</p>
             )}
           </div>
 
@@ -213,43 +213,43 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
             type="datetime-local"
             {...register('end_date')}
             error={errors.end_date?.message}
-            className="text-sm"
+            className="text-sm border-2 border-gray-300 focus:border-purple-500"
           />
 
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
             <div className="flex items-center space-x-2 mb-3">
               <Sparkles className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-900">Battle Guidelines</h3>
+              <h3 className="font-bold text-blue-900">Battle Guidelines</h3>
             </div>
             <ul className="text-sm text-blue-800 space-y-2">
               <li className="flex items-start space-x-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>Poets can choose any perspective or remain neutral</span>
+                <span className="text-blue-500 mt-0.5 font-bold">•</span>
+                <span className="font-medium">Poets can choose any perspective or remain neutral</span>
               </li>
               <li className="flex items-start space-x-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>Neutral poets participate but cannot win the battle</span>
+                <span className="text-blue-500 mt-0.5 font-bold">•</span>
+                <span className="font-medium">Neutral poets participate but cannot win the battle</span>
               </li>
               <li className="flex items-start space-x-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>Community engagement determines the winning side</span>
+                <span className="text-blue-500 mt-0.5 font-bold">•</span>
+                <span className="font-medium">Community engagement determines the winning side</span>
               </li>
               <li className="flex items-start space-x-2">
-                <span className="text-blue-500 mt-0.5">•</span>
-                <span>All poets earn participation points for contributing</span>
+                <span className="text-blue-500 mt-0.5 font-bold">•</span>
+                <span className="font-medium">All poets earn participation points for contributing</span>
               </li>
             </ul>
           </div>
 
-          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-            <Button type="button" variant="outline" onClick={onClose} size="lg">
+          <div className="flex justify-end space-x-4 pt-6 border-t-2 border-gray-200">
+            <Button type="button" variant="outline" onClick={onClose} size="lg" className="border-2 border-gray-300">
               Cancel
             </Button>
             <Button 
               type="submit" 
               loading={createTheme.isPending} 
               size="lg"
-              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-lg hover:shadow-xl transform hover:scale-105"
+              className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-xl hover:shadow-2xl transform hover:scale-105 font-bold"
             >
               <Plus className="h-5 w-5 mr-2" />
               Create Battle
