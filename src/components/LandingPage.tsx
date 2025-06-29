@@ -77,6 +77,22 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+      {/* Bolt Hackathon Badge */}
+      <div className="fixed top-4 right-4 z-50">
+        <a
+          href="https://bolt.new/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block transform hover:scale-110 transition-transform duration-200"
+        >
+          <img
+            src="https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/assets/bolt-badge-white.png"
+            alt="Built with Bolt"
+            className="w-16 h-16 md:w-20 md:h-20 drop-shadow-lg hover:drop-shadow-xl transition-all duration-200"
+          />
+        </a>
+      </div>
+
       {/* Navigation */}
       <nav className="relative z-10 px-4 sm:px-6 lg:px-8 py-6">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
