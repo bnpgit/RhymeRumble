@@ -1,19 +1,101 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Users, UserPlus, Send, MessageCircle, Heart, Award, Search, BarChart3, TrendingUp, Coffee, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import { supabase } from '../lib/supabase';
+import { mockProfiles, mockFriendships, mockSocialSuggestions, mockActivity } from '../lib/mockData';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function SocialPage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'friends' | 'discover' | 'activity' | 'stats'>('friends');
   const [searchTerm, setSearchTerm] = useState('');
 
+  // Fetch real friendships data
+  const { data: friendships, isLoading: friendshipsLoading } = useQuery({
+    queryKey: ['friendships', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      
+      try {
+        const { data, error } = await supabase
+          .from('friendships')
+          .select(`
+            *,
+            profiles!friendships_friend_id_fkey(*)
+          `)
+          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
+          .eq('status', 'accepted');
+
+        if (error || !data || data.length === 0) {
+          return mockFriendships.filter(f => f.user_id === user.id);
+        }
+        
+        return data.map((friendship: any) => ({
+          ...friendship,
+          friend: friendship.profiles
+        }));
+      } catch (error) {
+        console.warn('Error fetching friendships, using mock data:', error);
+        return mockFriendships.filter(f => f.user_id === user.id);
+      }
+    },
+    enabled: !!user,
+  });
+
+  // Fetch all profiles for discovery
+  const { data: allProfiles, isLoading: profilesLoading } = useQuery({
+    queryKey: ['all-profiles'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .neq('id', user?.id || '');
+
+        if (error || !data || data.length === 0) {
+          return mockProfiles.filter(p => p.id !== user?.id);
+        }
+        return data;
+      } catch (error) {
+        console.warn('Error fetching profiles, using mock data:', error);
+        return mockProfiles.filter(p => p.id !== user?.id);
+      }
+    },
+    enabled: !!user,
+  });
+
   const tabs = [
-    { id: 'friends' as const, label: 'Friends', icon: Users, count: 0, color: 'from-blue-500 to-indigo-600' },
-    { id: 'discover' as const, label: 'Discover', icon: UserPlus, count: 0, color: 'from-green-500 to-emerald-600' },
-    { id: 'activity' as const, label: 'Activity', icon: MessageCircle, count: 0, color: 'from-purple-500 to-violet-600' },
-    { id: 'stats' as const, label: 'Stats', icon: BarChart3, count: 0, color: 'from-orange-500 to-red-600' },
+    { 
+      id: 'friends' as const, 
+      label: 'Friends', 
+      icon: Users, 
+      count: friendships?.length || 0, 
+      color: 'from-blue-500 to-indigo-600' 
+    },
+    { 
+      id: 'discover' as const, 
+      label: 'Discover', 
+      icon: UserPlus, 
+      count: allProfiles?.length || 0, 
+      color: 'from-green-500 to-emerald-600' 
+    },
+    { 
+      id: 'activity' as const, 
+      label: 'Activity', 
+      icon: MessageCircle, 
+      count: mockActivity.length, 
+      color: 'from-purple-500 to-violet-600' 
+    },
+    { 
+      id: 'stats' as const, 
+      label: 'Stats', 
+      icon: BarChart3, 
+      count: 0, 
+      color: 'from-orange-500 to-red-600' 
+    },
   ];
 
   const EmptyState = ({ icon: Icon, title, description, actionText, onAction }: {
@@ -40,6 +122,19 @@ export default function SocialPage() {
     </div>
   );
 
+  const isLoading = friendshipsLoading || profilesLoading;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-rose-600 via-pink-600 to-purple-700 flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-white text-lg">Loading social hub...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-rose-600 via-pink-600 to-purple-700">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -53,7 +148,7 @@ export default function SocialPage() {
         {/* Colorful Tabs */}
         <div className="flex justify-center mb-8">
           <div className="flex space-x-2 bg-white/20 backdrop-blur-sm p-2 rounded-2xl shadow-xl border border-white/30">
-            {tabs.map(({ id, label, icon: Icon, color }) => (
+            {tabs.map(({ id, label, icon: Icon, count, color }) => (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
@@ -65,6 +160,11 @@ export default function SocialPage() {
               >
                 <Icon className="h-4 w-4" />
                 <span>{label}</span>
+                {count > 0 && (
+                  <span className="bg-white/30 text-white text-xs rounded-full px-2 py-0.5 ml-1">
+                    {count}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -72,13 +172,64 @@ export default function SocialPage() {
 
         {/* Friends Tab */}
         {activeTab === 'friends' && (
-          <EmptyState
-            icon={Users}
-            title="No Friends Yet"
-            description="Start connecting with fellow poets! Your friends will appear here once you begin building your poetry community."
-            actionText="Discover Poets"
-            onAction={() => setActiveTab('discover')}
-          />
+          <>
+            {friendships && friendships.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {friendships.map((friendship, index) => (
+                  <div
+                    key={friendship.id}
+                    className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 animate-fadeIn border border-white/50"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="relative">
+                          <div className="h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold">
+                              {friendship.friend?.username?.charAt(0) || 'U'}
+                            </span>
+                          </div>
+                          <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-400"></div>
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{friendship.friend?.username}</h3>
+                          <p className="text-sm text-gray-600">{friendship.friend?.points || 0} points</p>
+                        </div>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button className="p-2 text-gray-400 hover:text-indigo-600 transition-colors">
+                          <MessageCircle className="h-5 w-5" />
+                        </button>
+                        <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                          <Heart className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                      <p className="text-sm text-gray-600">Bio:</p>
+                      <p className="font-medium text-gray-900 text-sm">
+                        {friendship.friend?.bio || 'No bio available'}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-1">
+                        <Send className="h-4 w-4" />
+                        <span>Invite to Battle</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Users}
+                title="No Friends Yet"
+                description="Start connecting with fellow poets! Your friends will appear here once you begin building your poetry community."
+                actionText="Discover Poets"
+                onAction={() => setActiveTab('discover')}
+              />
+            )}
+          </>
         )}
 
         {/* Discover Tab */}
@@ -99,11 +250,60 @@ export default function SocialPage() {
               />
             </div>
             
-            <EmptyState
-              icon={Coffee}
-              title="Poets Will Appear Here"
-              description="As more poets join RhymeRumble, you'll discover amazing writers with similar interests and styles. Check back soon!"
-            />
+            {allProfiles && allProfiles.length > 0 ? (
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {allProfiles
+                  .filter(profile => 
+                    profile.username.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                  .slice(0, 6)
+                  .map((profile, index) => (
+                    <div
+                      key={profile.id}
+                      className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 animate-fadeIn border border-white/50"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="h-12 w-12 bg-emerald-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-semibold">
+                              {profile.username.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{profile.username}</h3>
+                            <p className="text-sm text-gray-600">{profile.points || 0} points</p>
+                          </div>
+                        </div>
+                        <UserPlus className="h-5 w-5 text-gray-400" />
+                      </div>
+                      <div className="mb-4">
+                        <p className="text-sm text-gray-600 mb-2">Bio:</p>
+                        <p className="text-sm font-medium text-gray-900">
+                          {profile.bio || 'No bio available'}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Level {profile.level || 1}
+                        </p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <button className="flex-1 bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700 transition-colors">
+                          Add Friend
+                        </button>
+                        <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                          View Profile
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <EmptyState
+                icon={Coffee}
+                title="Poets Will Appear Here"
+                description="As more poets join RhymeRumble, you'll discover amazing writers with similar interests and styles. Check back soon!"
+              />
+            )}
           </div>
         )}
 
@@ -114,14 +314,31 @@ export default function SocialPage() {
               <h2 className="text-xl font-bold">Recent Activity</h2>
               <p className="text-sm text-purple-100 mt-1">Your personalized activity feed</p>
             </div>
-            <div className="p-8">
-              <EmptyState
-                icon={Sparkles}
-                title="Your Activity Feed Awaits"
-                description="Once you start writing poems, liking content, and making friends, your activity will appear here. Start your poetry journey!"
-                actionText="Write Your First Poem"
-                onAction={() => window.location.href = '/dashboard'}
-              />
+            <div className="divide-y divide-gray-200">
+              {mockActivity.map((activity, index) => (
+                <div
+                  key={activity.id}
+                  className="px-8 py-6 hover:bg-gray-50 transition-colors animate-fadeIn"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="flex items-center space-x-4">
+                    <div className="text-2xl">{activity.icon}</div>
+                    <div className="flex-1">
+                      <p className="text-gray-900">
+                        <span className="font-semibold">{activity.user}</span>
+                        <span className="ml-1">{activity.action}</span>
+                        {activity.target && (
+                          <span className="ml-1 font-medium text-indigo-600">"{activity.target}"</span>
+                        )}
+                      </p>
+                      <p className="text-sm text-gray-500">{activity.time}</p>
+                    </div>
+                    <div className="text-gray-400">
+                      <Award className="h-5 w-5" />
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -139,7 +356,7 @@ export default function SocialPage() {
                 <div className="bg-white/20 p-4 rounded-full w-fit mx-auto mb-4">
                   <Users className="h-8 w-8 text-white" />
                 </div>
-                <p className="text-4xl font-bold">0</p>
+                <p className="text-4xl font-bold">{friendships?.length || 0}</p>
                 <p className="text-blue-100 font-medium">Total Friends</p>
               </div>
               

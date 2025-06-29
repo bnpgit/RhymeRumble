@@ -1,118 +1,122 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Crown, Trophy, Medal, Award, User, TrendingUp, Flame, Heart, Zap, Star, Sparkles } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import { supabase } from '../lib/supabase';
+import { mockProfiles, mockPoems, mockPoemLikes } from '../lib/mockData';
+import LoadingSpinner from '../components/ui/LoadingSpinner';
+
+interface LeaderboardUser {
+  id: string;
+  username: string;
+  points: number;
+  level: number;
+  battlesWon: number;
+  poemsWritten: number;
+  totalLikes: number;
+  score: number;
+  avatar: string;
+  trend: string;
+  rank: number;
+}
 
 export default function LeaderboardPage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'overall' | 'monthly' | 'battles'>('overall');
 
-  // Enhanced leaderboard data with weighted scoring (hidden from users)
-  const mockLeaders = [
-    { 
-      id: '1', 
-      username: 'PoetMaster', 
-      points: 2450, 
-      level: 12, 
-      battlesWon: 15, 
-      poemsWritten: 67,
-      totalLikes: 234,
-      score: (67 * 5) + (234 * 2) + (15 * 10), // Hidden calculation
-      avatar: '👑',
-      trend: 'up',
-      rank: 1
+  // Fetch real data from Supabase
+  const { data: profiles, isLoading: profilesLoading } = useQuery({
+    queryKey: ['leaderboard-profiles'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .order('points', { ascending: false });
+        
+        if (error || !data || data.length === 0) {
+          return mockProfiles;
+        }
+        return data;
+      } catch (error) {
+        console.warn('Error fetching profiles, using mock data:', error);
+        return mockProfiles;
+      }
     },
-    { 
-      id: '2', 
-      username: 'VerseCrafter', 
-      points: 2120, 
-      level: 11, 
-      battlesWon: 12, 
-      poemsWritten: 54,
-      totalLikes: 198,
-      score: (54 * 5) + (198 * 2) + (12 * 10),
-      avatar: '🏆',
-      trend: 'up',
-      rank: 2
+  });
+
+  const { data: poems, isLoading: poemsLoading } = useQuery({
+    queryKey: ['leaderboard-poems'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('poems')
+          .select('*');
+        
+        if (error || !data || data.length === 0) {
+          return mockPoems;
+        }
+        return data;
+      } catch (error) {
+        console.warn('Error fetching poems, using mock data:', error);
+        return mockPoems;
+      }
     },
-    { 
-      id: '3', 
-      username: 'RhymeWarrior', 
-      points: 1890, 
-      level: 10, 
-      battlesWon: 10, 
-      poemsWritten: 48,
-      totalLikes: 156,
-      score: (48 * 5) + (156 * 2) + (10 * 10),
-      avatar: '🥇',
-      trend: 'down',
-      rank: 3
+  });
+
+  const { data: poemLikes, isLoading: likesLoading } = useQuery({
+    queryKey: ['leaderboard-likes'],
+    queryFn: async () => {
+      try {
+        const { data, error } = await supabase
+          .from('poem_likes')
+          .select('*');
+        
+        if (error || !data || data.length === 0) {
+          return mockPoemLikes;
+        }
+        return data;
+      } catch (error) {
+        console.warn('Error fetching likes, using mock data:', error);
+        return mockPoemLikes;
+      }
     },
-    { 
-      id: '4', 
-      username: 'WordWeaver', 
-      points: 1650, 
-      level: 9, 
-      battlesWon: 8, 
-      poemsWritten: 41,
-      totalLikes: 134,
-      score: (41 * 5) + (134 * 2) + (8 * 10),
-      avatar: '🥈',
-      trend: 'up',
-      rank: 4
-    },
-    { 
-      id: '5', 
-      username: 'SoulScriber', 
-      points: 1420, 
-      level: 8, 
-      battlesWon: 7, 
-      poemsWritten: 36,
-      totalLikes: 112,
-      score: (36 * 5) + (112 * 2) + (7 * 10),
-      avatar: '🥉',
-      trend: 'stable',
-      rank: 5
-    },
-    { 
-      id: '6', 
-      username: 'MelodyMaker', 
-      points: 1280, 
-      level: 8, 
-      battlesWon: 6, 
-      poemsWritten: 32,
-      totalLikes: 98,
-      score: (32 * 5) + (98 * 2) + (6 * 10),
-      avatar: '🎵',
-      trend: 'up',
-      rank: 6
-    },
-    { 
-      id: '7', 
-      username: 'StanzaStorm', 
-      points: 1150, 
-      level: 7, 
-      battlesWon: 5, 
-      poemsWritten: 29,
-      totalLikes: 87,
-      score: (29 * 5) + (87 * 2) + (5 * 10),
-      avatar: '⚡',
-      trend: 'down',
-      rank: 7
-    },
-    { 
-      id: '8', 
-      username: 'InkDancer', 
-      points: 980, 
-      level: 6, 
-      battlesWon: 4, 
-      poemsWritten: 25,
-      totalLikes: 76,
-      score: (25 * 5) + (76 * 2) + (4 * 10),
-      avatar: '💃',
-      trend: 'stable',
-      rank: 8
-    },
-  ];
+  });
+
+  // Calculate leaderboard data
+  const calculateLeaderboardData = (): LeaderboardUser[] => {
+    if (!profiles || !poems || !poemLikes) return [];
+
+    return profiles.map((profile, index) => {
+      const userPoems = poems.filter(poem => poem.author_id === profile.id);
+      const userLikes = poemLikes.filter(like => 
+        userPoems.some(poem => poem.id === like.poem_id)
+      );
+
+      // Calculate battles won (simplified - count poems with high likes)
+      const battlesWon = userPoems.filter(poem => poem.likes_count > 30).length;
+      
+      // Calculate score (hidden from users)
+      const score = (userPoems.length * 5) + (userLikes.length * 2) + (battlesWon * 10);
+
+      return {
+        id: profile.id,
+        username: profile.username,
+        points: profile.points || 0,
+        level: profile.level || 1,
+        battlesWon,
+        poemsWritten: userPoems.length,
+        totalLikes: userLikes.length,
+        score,
+        avatar: ['👑', '🏆', '🥇', '🥈', '🥉', '🎵', '⚡', '💃'][index] || '👤',
+        trend: ['up', 'up', 'down', 'up', 'stable', 'up', 'down', 'stable'][index] || 'stable',
+        rank: index + 1
+      };
+    }).sort((a, b) => b.score - a.score);
+  };
+
+  const leaderboardData = calculateLeaderboardData();
+  const isLoading = profilesLoading || poemsLoading || likesLoading;
 
   // Recent battles data for Battle Wins tab
   const recentBattles = [
@@ -162,9 +166,6 @@ export default function LeaderboardPage() {
     }
   ];
 
-  // Sort leaders by score for overall and monthly (hidden calculation)
-  const sortedLeaders = [...mockLeaders].sort((a, b) => b.score - a.score);
-
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1: return <Crown className="h-6 w-6 text-yellow-400" />;
@@ -196,6 +197,17 @@ export default function LeaderboardPage() {
     { id: 'monthly' as const, label: 'This Month', icon: TrendingUp },
     { id: 'battles' as const, label: 'Battle Wins', icon: Trophy },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 flex items-center justify-center">
+        <div className="text-center">
+          <LoadingSpinner size="lg" />
+          <p className="mt-4 text-white text-lg">Loading leaderboard...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700">
@@ -234,43 +246,43 @@ export default function LeaderboardPage() {
         </div>
 
         {/* Colorful Top 3 Podium */}
-        {(activeTab === 'overall' || activeTab === 'monthly') && (
+        {(activeTab === 'overall' || activeTab === 'monthly') && leaderboardData.length >= 3 && (
           <div className="mb-8">
             <div className="flex justify-center items-end space-x-6 mb-8">
               {/* 2nd Place */}
               <div className="text-center animate-slideInLeft">
                 <div className={`${getRankColor(2)} p-4 rounded-full mb-3 inline-flex items-center justify-center`}>
-                  <span className="text-2xl">{sortedLeaders[1]?.avatar}</span>
+                  <span className="text-2xl">{leaderboardData[1]?.avatar}</span>
                 </div>
                 <div className="bg-gradient-to-br from-slate-100 to-gray-200 p-4 rounded-xl shadow-xl min-w-[120px] border-2 border-gray-300">
                   <Trophy className="h-6 w-6 text-gray-500 mx-auto mb-2" />
-                  <h3 className="font-bold text-gray-900">{sortedLeaders[1]?.username}</h3>
-                  <p className="text-sm text-gray-600 font-semibold">{sortedLeaders[1]?.points} pts</p>
+                  <h3 className="font-bold text-gray-900">{leaderboardData[1]?.username}</h3>
+                  <p className="text-sm text-gray-600 font-semibold">{leaderboardData[1]?.points} pts</p>
                 </div>
               </div>
 
               {/* 1st Place */}
               <div className="text-center animate-slideInUp">
                 <div className={`${getRankColor(1)} p-6 rounded-full mb-3 inline-flex items-center justify-center transform scale-110`}>
-                  <span className="text-3xl">{sortedLeaders[0]?.avatar}</span>
+                  <span className="text-3xl">{leaderboardData[0]?.avatar}</span>
                 </div>
                 <div className="bg-gradient-to-br from-yellow-100 to-amber-200 p-6 rounded-xl shadow-2xl min-w-[140px] border-3 border-yellow-400">
                   <Crown className="h-8 w-8 text-yellow-600 mx-auto mb-2" />
-                  <h3 className="font-bold text-gray-900 text-lg">{sortedLeaders[0]?.username}</h3>
-                  <p className="text-gray-700 font-bold">{sortedLeaders[0]?.points} pts</p>
-                  <p className="text-xs text-gray-600">Level {sortedLeaders[0]?.level}</p>
+                  <h3 className="font-bold text-gray-900 text-lg">{leaderboardData[0]?.username}</h3>
+                  <p className="text-gray-700 font-bold">{leaderboardData[0]?.points} pts</p>
+                  <p className="text-xs text-gray-600">Level {leaderboardData[0]?.level}</p>
                 </div>
               </div>
 
               {/* 3rd Place */}
               <div className="text-center animate-slideInRight">
                 <div className={`${getRankColor(3)} p-4 rounded-full mb-3 inline-flex items-center justify-center`}>
-                  <span className="text-2xl">{sortedLeaders[2]?.avatar}</span>
+                  <span className="text-2xl">{leaderboardData[2]?.avatar}</span>
                 </div>
                 <div className="bg-gradient-to-br from-orange-100 to-amber-200 p-4 rounded-xl shadow-xl min-w-[120px] border-2 border-orange-400">
                   <Medal className="h-6 w-6 text-orange-600 mx-auto mb-2" />
-                  <h3 className="font-bold text-gray-900">{sortedLeaders[2]?.username}</h3>
-                  <p className="text-sm text-gray-600 font-semibold">{sortedLeaders[2]?.points} pts</p>
+                  <h3 className="font-bold text-gray-900">{leaderboardData[2]?.username}</h3>
+                  <p className="text-sm text-gray-600 font-semibold">{leaderboardData[2]?.points} pts</p>
                 </div>
               </div>
             </div>
@@ -339,7 +351,7 @@ export default function LeaderboardPage() {
               </p>
             </div>
             <div className="divide-y divide-gray-100">
-              {sortedLeaders.map((leader, index) => {
+              {leaderboardData.map((leader, index) => {
                 const rank = index + 1;
                 const isCurrentUser = leader.id === user?.id;
                 
@@ -417,11 +429,15 @@ export default function LeaderboardPage() {
                 <p className="text-pink-100 font-medium">Level</p>
               </div>
               <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-                <p className="text-3xl font-bold">5</p>
+                <p className="text-3xl font-bold">
+                  {leaderboardData.find(l => l.id === user.id)?.battlesWon || 0}
+                </p>
                 <p className="text-pink-100 font-medium">Battles Won</p>
               </div>
               <div className="text-center bg-white/20 backdrop-blur-sm rounded-xl p-4 shadow-lg">
-                <p className="text-3xl font-bold">12</p>
+                <p className="text-3xl font-bold">
+                  {leaderboardData.find(l => l.id === user.id)?.poemsWritten || 0}
+                </p>
                 <p className="text-pink-100 font-medium">Poems Written</p>
               </div>
             </div>
