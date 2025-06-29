@@ -8,6 +8,7 @@ import CreatePoemModal from '../components/poems/CreatePoemModal';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import Button from '../components/ui/Button';
 import Input from '../components/ui/Input';
+import AnimatedBackground from '../components/ui/AnimatedBackground';
 import { Theme } from '../types';
 
 export default function DashboardPage() {
@@ -38,8 +39,9 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-800 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-800 flex items-center justify-center relative overflow-hidden">
+        <AnimatedBackground />
+        <div className="text-center relative z-10">
           <LoadingSpinner size="lg" />
           <p className="mt-4 text-white text-lg">Loading poetry battles...</p>
         </div>
@@ -48,8 +50,11 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-blue-600 to-indigo-800 relative overflow-hidden">
+      {/* Animated Background */}
+      <AnimatedBackground />
+      
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         {/* Header with Vibrant Colors */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8">
           <div className="text-center sm:text-left">

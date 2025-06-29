@@ -7,6 +7,7 @@ import { mockProfiles, mockFriendships, mockSocialSuggestions, mockActivity } fr
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import FloatingBubbles from '../components/ui/FloatingBubbles';
 
 export default function SocialPage() {
   const { user } = useAuthStore();
@@ -126,8 +127,9 @@ export default function SocialPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-rose-600 via-pink-600 to-purple-700 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-br from-rose-600 via-pink-600 to-purple-700 flex items-center justify-center relative overflow-hidden">
+        <FloatingBubbles colors={['rgba(255, 182, 193, 0.6)', 'rgba(221, 160, 221, 0.6)', 'rgba(255, 192, 203, 0.6)']} />
+        <div className="text-center relative z-10">
           <LoadingSpinner size="lg" />
           <p className="mt-4 text-white text-lg">Loading social hub...</p>
         </div>
@@ -136,8 +138,11 @@ export default function SocialPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-600 via-pink-600 to-purple-700">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-rose-600 via-pink-600 to-purple-700 relative overflow-hidden">
+      {/* Animated Floating Bubbles Background */}
+      <FloatingBubbles colors={['rgba(255, 182, 193, 0.6)', 'rgba(221, 160, 221, 0.6)', 'rgba(255, 192, 203, 0.6)']} />
+      
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="text-center mb-8">
           <h1 className="text-6xl font-bold bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text text-transparent mb-4 animate-float">
             Social Hub

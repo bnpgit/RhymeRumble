@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/authStore';
 import { supabase } from '../lib/supabase';
 import { mockProfiles, mockPoems, mockPoemLikes } from '../lib/mockData';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import StarField from '../components/ui/StarField';
 
 interface LeaderboardUser {
   id: string;
@@ -200,8 +201,9 @@ export default function LeaderboardPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 flex items-center justify-center relative overflow-hidden">
+        <StarField colors={['#FFD700', '#FFF8DC', '#87CEEB', '#DDA0DD']} />
+        <div className="text-center relative z-10">
           <LoadingSpinner size="lg" />
           <p className="mt-4 text-white text-lg">Loading leaderboard...</p>
         </div>
@@ -210,8 +212,11 @@ export default function LeaderboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 relative overflow-hidden">
+      {/* Animated Star Field Background */}
+      <StarField colors={['#FFD700', '#FFF8DC', '#87CEEB', '#DDA0DD']} />
+      
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
         <div className="text-center mb-8">
           <h1 className="text-6xl font-bold bg-gradient-to-r from-yellow-300 via-orange-300 to-red-300 bg-clip-text text-transparent mb-4 animate-float">
             Hall of Fame
