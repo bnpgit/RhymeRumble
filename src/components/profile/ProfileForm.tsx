@@ -22,6 +22,8 @@ export default function ProfileForm() {
     register,
     handleSubmit,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<ProfileFormData>({
     defaultValues: {
       username: user?.username || '',
@@ -30,12 +32,40 @@ export default function ProfileForm() {
     },
   });
 
+  // Watch for changes to update form when user data changes
+  React.useEffect(() => {
+    if (user) {
+      setValue('username', user.username || '');
+      setValue('full_name', user.full_name || '');
+      setValue('bio', user.bio || '');
+    }
+  }, [user, setValue]);
+
   const onSubmit = async (data: ProfileFormData) => {
+    if (!user) return;
+    
     setLoading(true);
     try {
+      // Check if username is taken by another user
+      if (data.username !== user.username) {
+        const { data: existingUser } = await supabase
+          .from('profiles')
+          .select('id')
+          .eq('username', data.username)
+          .neq('id', user.id)
+          .single();
+
+        if (existingUser) {
+          toast.error('Username is already taken by another user');
+          setLoading(false);
+          return;
+        }
+      }
+
       await updateProfile(data);
-    } catch (error) {
-      // Error is handled in the store
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      toast.error(error.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -110,19 +140,30 @@ export default function ProfileForm() {
               value: 3,
               message: 'Username must be at least 3 characters',
             },
+            maxLength: {
+              value: 30,
+              message: 'Username must be less than 30 characters',
+            },
             pattern: {
               value: /^[a-zA-Z0-9_]+$/,
               message: 'Username can only contain letters, numbers, and underscores',
             },
           })}
           error={errors.username?.message}
+          placeholder="Enter your username"
         />
 
         <Input
           label="Full Name"
           icon={<User className="h-5 w-5 text-gray-400" />}
-          {...register('full_name')}
+          {...register('full_name', {
+            maxLength: {
+              value: 100,
+              message: 'Full name must be less than 100 characters',
+            },
+          })}
           error={errors.full_name?.message}
+          placeholder="Enter your full name (optional)"
         />
 
         <Input
@@ -131,6 +172,7 @@ export default function ProfileForm() {
           value={user.email}
           disabled
           icon={<Mail className="h-5 w-5 text-gray-400" />}
+          className="bg-gray-50"
         />
 
         <div className="space-y-1">
@@ -157,7 +199,11 @@ export default function ProfileForm() {
         </div>
 
         <div className="flex justify-end">
-          <Button type="submit" loading={loading}>
+          <Button 
+            type="submit" 
+            loading={loading}
+            disabled={loading || uploading}
+          >
             Update Profile
           </Button>
         </div>

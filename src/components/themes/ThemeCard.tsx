@@ -1,7 +1,10 @@
-import React from 'react';
-import { Clock, Users, FileText, Flame, Heart, Shield, Zap, Crown, Star } from 'lucide-react';
+import React, { useState } from 'react';
+import { Clock, Users, FileText, Flame, Heart, Shield, Zap, Crown, Star, ChevronDown, ChevronUp } from 'lucide-react';
 import { Theme } from '../../types';
+import { usePoems } from '../../hooks/usePoems';
+import PoemCard from '../poems/PoemCard';
 import Button from '../ui/Button';
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 interface ThemeCardProps {
   theme: Theme;
@@ -9,6 +12,9 @@ interface ThemeCardProps {
 }
 
 export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
+  const [showPoems, setShowPoems] = useState(false);
+  const { data: poems, isLoading: poemsLoading } = usePoems(theme.id);
+
   const getThemeIcon = (title: string) => {
     if (title.toLowerCase().includes('fire')) return Flame;
     if (title.toLowerCase().includes('love') || title.toLowerCase().includes('heart')) return Heart;
@@ -41,9 +47,20 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
     return 'from-indigo-400 to-purple-500';
   };
 
+  const getSideStats = () => {
+    if (!poems) return { option_1: 0, option_2: 0, neutral: 0 };
+    
+    return poems.reduce((acc, poem) => {
+      acc[poem.side]++;
+      return acc;
+    }, { option_1: 0, option_2: 0, neutral: 0 });
+  };
+
+  const sideStats = getSideStats();
+
   return (
     <div className="bg-white rounded-2xl shadow-medium hover:shadow-soft transition-all duration-200 overflow-hidden card-hover">
-      {/* Simplified header */}
+      {/* Header */}
       <div className={`h-1 bg-gradient-to-r ${getGradientColors(theme.title)}`}></div>
       
       <div className="p-6">
@@ -72,7 +89,7 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
 
         <p className="text-gray-600 mb-6 leading-relaxed">{theme.description}</p>
 
-        {/* Simplified stats */}
+        {/* Stats */}
         <div className="bg-gray-50 rounded-xl p-4 mb-6">
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div className="flex items-center space-x-4">
@@ -82,7 +99,7 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
               </div>
               <div className="flex items-center space-x-1">
                 <FileText className="h-4 w-4 text-purple-500" />
-                <span className="font-semibold">{theme.total_poems || 0} poems</span>
+                <span className="font-semibold">{poems?.length || 0} poems</span>
               </div>
             </div>
             <div className="flex items-center space-x-1">
@@ -92,39 +109,86 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
           </div>
         </div>
 
-        {/* Simplified side options */}
+        {/* Side distribution */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex space-x-2">
             <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
-              {theme.duality_option_1}
+              {theme.duality_option_1} ({sideStats.option_1})
             </span>
             <span className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm font-medium">
-              {theme.duality_option_2}
+              {theme.duality_option_2} ({sideStats.option_2})
             </span>
             <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm font-medium">
-              Neutral
+              Neutral ({sideStats.neutral})
             </span>
           </div>
         </div>
-        
-        <Button
-          onClick={() => onJoinBattle(theme.id)}
-          disabled={!theme.is_active}
-          className={`w-full text-lg py-3 rounded-xl font-bold shadow-soft ${
-            theme.is_active
-              ? `bg-gradient-to-r ${getGradientColors(theme.title)} text-white hover:shadow-medium`
-              : 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          }`}
-        >
-          {theme.is_active ? (
-            <>
-              <Crown className="h-5 w-5 mr-2" />
-              Join Battle
-            </>
-          ) : (
-            'View Results'
-          )}
-        </Button>
+
+        {/* Action buttons */}
+        <div className="space-y-3">
+          <Button
+            onClick={() => onJoinBattle(theme.id)}
+            disabled={!theme.is_active}
+            className={`w-full text-lg py-3 rounded-xl font-bold shadow-soft ${
+              theme.is_active
+                ? `bg-gradient-to-r ${getGradientColors(theme.title)} text-white hover:shadow-medium`
+                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+            }`}
+          >
+            {theme.is_active ? (
+              <>
+                <Crown className="h-5 w-5 mr-2" />
+                Join Battle
+              </>
+            ) : (
+              'View Results'
+            )}
+          </Button>
+
+          {/* Toggle poems view */}
+          <Button
+            onClick={() => setShowPoems(!showPoems)}
+            variant="outline"
+            className="w-full"
+          >
+            {showPoems ? (
+              <>
+                <ChevronUp className="h-4 w-4 mr-2" />
+                Hide Poems
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 mr-2" />
+                View Poems ({poems?.length || 0})
+              </>
+            )}
+          </Button>
+        </div>
+
+        {/* Poems section */}
+        {showPoems && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <h4 className="text-lg font-bold text-gray-900 mb-4">Battle Poems</h4>
+            {poemsLoading ? (
+              <div className="flex justify-center py-8">
+                <LoadingSpinner size="md" />
+              </div>
+            ) : poems && poems.length > 0 ? (
+              <div className="space-y-4 max-h-96 overflow-y-auto">
+                {poems.map((poem) => (
+                  <div key={poem.id} className="transform scale-95">
+                    <PoemCard poem={poem} />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                <FileText className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                <p>No poems yet. Be the first to contribute!</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

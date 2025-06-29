@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             toast.success('Welcome back!');
           } else if (profileError?.code === 'PGRST116') {
             // Profile doesn't exist, create it
-            const username = data.user.email?.split('@')[0] || 'user';
+            const username = data.user.user_metadata?.username || data.user.email?.split('@')[0] || 'user';
             const { error: createError } = await supabase
               .from('profiles')
               .insert({
@@ -69,11 +69,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         } catch (profileError) {
           console.error('Profile fetch error:', profileError);
           // Continue with basic user info even if profile fails
+          const fallbackUsername = data.user.user_metadata?.username || data.user.email?.split('@')[0] || 'poet';
           set({
             user: {
               id: data.user.id,
               email: data.user.email!,
-              username: data.user.email?.split('@')[0] || 'user',
+              username: fallbackUsername,
               points: 0,
               level: 1,
               created_at: new Date().toISOString(),
@@ -270,11 +271,12 @@ supabase.auth.onAuthStateChange(async (event, session) => {
         });
       } else {
         // Create basic user object if profile fetch fails
+        const fallbackUsername = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'poet';
         useAuthStore.setState({
           user: {
             id: session.user.id,
             email: session.user.email!,
-            username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user',
+            username: fallbackUsername,
             points: 0,
             level: 1,
             created_at: new Date().toISOString(),
@@ -286,12 +288,11 @@ supabase.auth.onAuthStateChange(async (event, session) => {
 
         // Try to create profile in background
         try {
-          const username = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user';
           await supabase
             .from('profiles')
             .insert({
               id: session.user.id,
-              username,
+              username: fallbackUsername,
               points: 0,
               level: 1,
             });
@@ -302,11 +303,12 @@ supabase.auth.onAuthStateChange(async (event, session) => {
     } catch (error) {
       console.error('Profile fetch error:', error);
       // Fallback to basic user info
+      const fallbackUsername = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'poet';
       useAuthStore.setState({
         user: {
           id: session.user.id,
           email: session.user.email!,
-          username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user',
+          username: fallbackUsername,
           points: 0,
           level: 1,
           created_at: new Date().toISOString(),
