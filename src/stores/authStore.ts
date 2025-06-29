@@ -37,8 +37,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             });
             toast.success('Welcome back!');
           } else if (profileError?.code === 'PGRST116') {
-            // Profile doesn't exist, create it
-            const username = data.user.user_metadata?.username || data.user.email?.split('@')[0] || 'user';
+            // Profile doesn't exist, create it using metadata or email
+            const username = data.user.user_metadata?.username || data.user.email?.split('@')[0] || 'poet';
             const { error: createError } = await supabase
               .from('profiles')
               .insert({
@@ -132,40 +132,72 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
-        // Create profile asynchronously
-        const createProfile = async () => {
-          try {
-            await supabase
-              .from('profiles')
-              .insert({
-                id: data.user!.id,
-                username,
-                points: 0,
-                level: 1,
-              });
-          } catch (error) {
-            console.error('Profile creation error:', error);
-          }
-        };
-
-        // Don't wait for profile creation
-        createProfile();
-
-        // If user is immediately confirmed (no email verification required)
-        if (data.session) {
-          set({
-            user: {
+        // Create profile immediately and wait for it
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .insert({
               id: data.user.id,
-              email: data.user.email!,
               username,
               points: 0,
               level: 1,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            },
-            session: data.session,
-            loading: false,
-          });
+            });
+
+          if (profileError) {
+            console.error('Profile creation error:', profileError);
+          }
+        } catch (error) {
+          console.error('Profile creation failed:', error);
+        }
+
+        // If user is immediately confirmed (no email verification required)
+        if (data.session) {
+          // Try to fetch the created profile
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', data.user.id)
+              .single();
+
+            if (profile) {
+              set({
+                user: { ...profile, email: data.user.email! },
+                session: data.session,
+                loading: false,
+              });
+            } else {
+              // Fallback to user metadata
+              set({
+                user: {
+                  id: data.user.id,
+                  email: data.user.email!,
+                  username,
+                  points: 0,
+                  level: 1,
+                  created_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                },
+                session: data.session,
+                loading: false,
+              });
+            }
+          } catch (error) {
+            // Fallback to user metadata
+            set({
+              user: {
+                id: data.user.id,
+                email: data.user.email!,
+                username,
+                points: 0,
+                level: 1,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+              },
+              session: data.session,
+              loading: false,
+            });
+          }
           toast.success('🎉 Welcome to RhymeRumble! Your poetry journey begins now!');
         } else {
           set({ loading: false });
@@ -302,7 +334,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
       }
     } catch (error) {
       console.error('Profile fetch error:', error);
-      // Fallback to basic user info
+      // Fallback to basic user info from metadata or email
       const fallbackUsername = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'poet';
       useAuthStore.setState({
         user: {
