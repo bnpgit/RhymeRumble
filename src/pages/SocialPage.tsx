@@ -1,50 +1,29 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Users, UserPlus, Send, MessageCircle, Heart, Award, Search, BarChart3, TrendingUp, Coffee, Sparkles } from 'lucide-react';
+import { Users, UserPlus, Send, MessageCircle, Heart, Award, Search, BarChart3, TrendingUp, Coffee, Sparkles, Bell, Eye } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import { supabase } from '../lib/supabase';
-import { mockProfiles, mockFriendships, mockSocialSuggestions, mockActivity } from '../lib/mockData';
+import { useFriendships, useFriendRequests, useSendFriendRequest } from '../hooks/useFriendships';
+import { mockActivity } from '../lib/mockData';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import FloatingBubbles from '../components/ui/FloatingBubbles';
+import UserProfileModal from '../components/profile/UserProfileModal';
+import FriendRequestsModal from '../components/social/FriendRequestsModal';
+import { User } from '../types';
 
 export default function SocialPage() {
   const { user } = useAuthStore();
   const [activeTab, setActiveTab] = useState<'friends' | 'discover' | 'activity' | 'stats'>('friends');
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showFriendRequests, setShowFriendRequests] = useState(false);
 
-  // Fetch real friendships data
-  const { data: friendships, isLoading: friendshipsLoading } = useQuery({
-    queryKey: ['friendships', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      try {
-        const { data, error } = await supabase
-          .from('friendships')
-          .select(`
-            *,
-            profiles!friendships_friend_id_fkey(*)
-          `)
-          .or(`user_id.eq.${user.id},friend_id.eq.${user.id}`)
-          .eq('status', 'accepted');
-
-        if (error || !data || data.length === 0) {
-          return mockFriendships.filter(f => f.user_id === user.id);
-        }
-        
-        return data.map((friendship: any) => ({
-          ...friendship,
-          friend: friendship.profiles
-        }));
-      } catch (error) {
-        console.warn('Error fetching friendships, using mock data:', error);
-        return mockFriendships.filter(f => f.user_id === user.id);
-      }
-    },
-    enabled: !!user,
-  });
+  // Fetch friendships and friend requests
+  const { data: friendships, isLoading: friendshipsLoading } = useFriendships(user?.id);
+  const { data: friendRequests, isLoading: requestsLoading } = useFriendRequests(user?.id);
+  const sendFriendRequest = useSendFriendRequest();
 
   // Fetch all profiles for discovery
   const { data: allProfiles, isLoading: profilesLoading } = useQuery({
@@ -56,17 +35,48 @@ export default function SocialPage() {
           .select('*')
           .neq('id', user?.id || '');
 
-        if (error || !data || data.length === 0) {
-          return mockProfiles.filter(p => p.id !== user?.id);
-        }
-        return data;
+        if (error) throw error;
+        return data as User[];
       } catch (error) {
-        console.warn('Error fetching profiles, using mock data:', error);
-        return mockProfiles.filter(p => p.id !== user?.id);
+        console.warn('Error fetching profiles:', error);
+        return [];
       }
     },
     enabled: !!user,
   });
+
+  const handleSendFriendRequest = (friendId: string) => {
+    if (!user) return;
+    sendFriendRequest.mutate({
+      userId: user.id,
+      friendId
+    });
+  };
+
+  const handleViewProfile = (profile: User) => {
+    setSelectedUser(profile);
+  };
+
+  // Filter out existing friends and pending requests from discovery
+  const getFilteredProfiles = () => {
+    if (!allProfiles) return [];
+    
+    const friendIds = new Set(friendships?.map(f => 
+      f.user_id === user?.id ? f.friend_id : f.user_id
+    ) || []);
+    
+    const sentRequestIds = new Set(friendRequests?.sent?.map(r => r.friend_id) || []);
+    const receivedRequestIds = new Set(friendRequests?.received?.map(r => r.user_id) || []);
+    
+    return allProfiles.filter(profile => 
+      !friendIds.has(profile.id) && 
+      !sentRequestIds.has(profile.id) && 
+      !receivedRequestIds.has(profile.id) &&
+      profile.username.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const filteredProfiles = getFilteredProfiles();
 
   const tabs = [
     { 
@@ -80,7 +90,7 @@ export default function SocialPage() {
       id: 'discover' as const, 
       label: 'Discover', 
       icon: UserPlus, 
-      count: allProfiles?.length || 0, 
+      count: filteredProfiles.length, 
       color: 'from-green-500 to-emerald-600' 
     },
     { 
@@ -123,7 +133,7 @@ export default function SocialPage() {
     </div>
   );
 
-  const isLoading = friendshipsLoading || profilesLoading;
+  const isLoading = friendshipsLoading || profilesLoading || requestsLoading;
 
   if (isLoading) {
     return (
@@ -148,6 +158,22 @@ export default function SocialPage() {
             Social Hub
           </h1>
           <p className="text-white/90 text-xl font-medium">Connect with fellow poets and build your community</p>
+          
+          {/* Friend Requests Notification */}
+          {friendRequests?.received && friendRequests.received.length > 0 && (
+            <div className="mt-4">
+              <Button
+                onClick={() => setShowFriendRequests(true)}
+                className="bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-bold shadow-lg relative"
+              >
+                <Bell className="h-5 w-5 mr-2" />
+                Friend Requests
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-6 w-6 flex items-center justify-center">
+                  {friendRequests.received.length}
+                </span>
+              </Button>
+            </div>
+          )}
         </div>
 
         {/* Colorful Tabs */}
@@ -180,50 +206,56 @@ export default function SocialPage() {
           <>
             {friendships && friendships.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {friendships.map((friendship, index) => (
-                  <div
-                    key={friendship.id}
-                    className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 animate-fadeIn border border-white/50"
-                    style={{ animationDelay: `${index * 0.1}s` }}
-                  >
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <div className="h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold">
-                              {friendship.friend?.username?.charAt(0) || 'U'}
-                            </span>
+                {friendships.map((friendship, index) => {
+                  const friend = friendship.user_id === user?.id ? friendship.friend : friendship.friend;
+                  return (
+                    <div
+                      key={friendship.id}
+                      className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 animate-fadeIn border border-white/50"
+                      style={{ animationDelay: `${index * 0.1}s` }}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="relative">
+                            <div className="h-12 w-12 bg-indigo-600 rounded-full flex items-center justify-center">
+                              <span className="text-white font-semibold">
+                                {friend?.username?.charAt(0) || 'U'}
+                              </span>
+                            </div>
+                            <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-400"></div>
                           </div>
-                          <div className="absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-green-400"></div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{friend?.username}</h3>
+                            <p className="text-sm text-gray-600">{friend?.points || 0} points</p>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">{friendship.friend?.username}</h3>
-                          <p className="text-sm text-gray-600">{friendship.friend?.points || 0} points</p>
+                        <div className="flex space-x-2">
+                          <button 
+                            onClick={() => friend && handleViewProfile(friend)}
+                            className="p-2 text-gray-400 hover:text-indigo-600 transition-colors"
+                          >
+                            <Eye className="h-5 w-5" />
+                          </button>
+                          <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
+                            <Heart className="h-5 w-5" />
+                          </button>
                         </div>
+                      </div>
+                      <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-gray-600">Bio:</p>
+                        <p className="font-medium text-gray-900 text-sm">
+                          {friend?.bio || 'No bio available'}
+                        </p>
                       </div>
                       <div className="flex space-x-2">
-                        <button className="p-2 text-gray-400 hover:text-indigo-600 transition-colors">
-                          <MessageCircle className="h-5 w-5" />
-                        </button>
-                        <button className="p-2 text-gray-400 hover:text-red-500 transition-colors">
-                          <Heart className="h-5 w-5" />
+                        <button className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-1">
+                          <Send className="h-4 w-4" />
+                          <span>Invite to Battle</span>
                         </button>
                       </div>
                     </div>
-                    <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-gray-600">Bio:</p>
-                      <p className="font-medium text-gray-900 text-sm">
-                        {friendship.friend?.bio || 'No bio available'}
-                      </p>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button className="flex-1 bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-indigo-700 transition-colors flex items-center justify-center space-x-1">
-                        <Send className="h-4 w-4" />
-                        <span>Invite to Battle</span>
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <EmptyState
@@ -255,58 +287,60 @@ export default function SocialPage() {
               />
             </div>
             
-            {allProfiles && allProfiles.length > 0 ? (
+            {filteredProfiles.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {allProfiles
-                  .filter(profile => 
-                    profile.username.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
-                  .slice(0, 6)
-                  .map((profile, index) => (
-                    <div
-                      key={profile.id}
-                      className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 animate-fadeIn border border-white/50"
-                      style={{ animationDelay: `${index * 0.1}s` }}
-                    >
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="h-12 w-12 bg-emerald-600 rounded-full flex items-center justify-center">
-                            <span className="text-white font-semibold">
-                              {profile.username.charAt(0)}
-                            </span>
-                          </div>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">{profile.username}</h3>
-                            <p className="text-sm text-gray-600">{profile.points || 0} points</p>
-                          </div>
+                {filteredProfiles.map((profile, index) => (
+                  <div
+                    key={profile.id}
+                    className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 hover:shadow-2xl transition-all duration-200 animate-fadeIn border border-white/50"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-12 w-12 bg-emerald-600 rounded-full flex items-center justify-center">
+                          <span className="text-white font-semibold">
+                            {profile.username.charAt(0)}
+                          </span>
                         </div>
-                        <UserPlus className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{profile.username}</h3>
+                          <p className="text-sm text-gray-600">{profile.points || 0} points</p>
+                        </div>
                       </div>
-                      <div className="mb-4">
-                        <p className="text-sm text-gray-600 mb-2">Bio:</p>
-                        <p className="text-sm font-medium text-gray-900">
-                          {profile.bio || 'No bio available'}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Level {profile.level || 1}
-                        </p>
-                      </div>
-                      <div className="flex space-x-2">
-                        <button className="flex-1 bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700 transition-colors">
-                          Add Friend
-                        </button>
-                        <button className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors">
-                          View Profile
-                        </button>
-                      </div>
+                      <UserPlus className="h-5 w-5 text-gray-400" />
                     </div>
-                  ))}
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-600 mb-2">Bio:</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {profile.bio || 'No bio available'}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Level {profile.level || 1}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleSendFriendRequest(profile.id)}
+                        disabled={sendFriendRequest.isPending}
+                        className="flex-1 bg-emerald-600 text-white px-3 py-2 rounded-lg text-sm hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                      >
+                        Add Friend
+                      </button>
+                      <button
+                        onClick={() => handleViewProfile(profile)}
+                        className="px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        View Profile
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <EmptyState
                 icon={Coffee}
-                title="Poets Will Appear Here"
-                description="As more poets join RhymeRumble, you'll discover amazing writers with similar interests and styles. Check back soon!"
+                title={searchTerm ? "No Poets Found" : "All Caught Up!"}
+                description={searchTerm ? "No poets match your search. Try a different username." : "You've discovered all available poets! Check back later for new members."}
               />
             )}
           </div>
@@ -385,8 +419,8 @@ export default function SocialPage() {
                 <div className="bg-white/20 p-4 rounded-full w-fit mx-auto mb-4">
                   <Send className="h-8 w-8 text-white" />
                 </div>
-                <p className="text-4xl font-bold">0</p>
-                <p className="text-purple-100 font-medium">Invitations Sent</p>
+                <p className="text-4xl font-bold">{friendRequests?.sent?.length || 0}</p>
+                <p className="text-purple-100 font-medium">Requests Sent</p>
               </div>
             </div>
             
@@ -401,6 +435,20 @@ export default function SocialPage() {
             </div>
           </div>
         )}
+
+        {/* Modals */}
+        {selectedUser && (
+          <UserProfileModal
+            isOpen={!!selectedUser}
+            onClose={() => setSelectedUser(null)}
+            user={selectedUser}
+          />
+        )}
+
+        <FriendRequestsModal
+          isOpen={showFriendRequests}
+          onClose={() => setShowFriendRequests(false)}
+        />
       </div>
     </div>
   );
