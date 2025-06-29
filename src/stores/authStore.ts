@@ -257,7 +257,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
       .single();
 
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Profile fetch timeout')), 15000)
+      setTimeout(() => reject(new Error('Profile fetch timeout')), 30000)
     );
 
     try {
