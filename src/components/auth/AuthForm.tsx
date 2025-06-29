@@ -20,7 +20,9 @@ interface FormData {
 export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuthStore();
+  const [error, setError] = useState<string | null>(null);
+  const [resetPasswordSent, setResetPasswordSent] = useState(false);
+  const { signIn, signUp, resetPassword } = useAuthStore();
 
   const {
     register,
@@ -28,6 +30,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
     formState: { errors },
     watch,
     reset,
+    getValues,
   } = useForm<FormData>({
     mode: 'onChange',
     defaultValues: {
@@ -42,6 +45,7 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
+    setError(null);
     try {
       if (mode === 'signin') {
         await signIn(data.email, data.password);
@@ -52,8 +56,38 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
         await signUp(data.email, data.password, data.username);
         reset();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Auth error:', error);
+      if (error.message?.includes('Invalid login credentials') || 
+          error.message?.includes('invalid_credentials')) {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else if (error.message?.includes('Email not confirmed')) {
+        setError('Please check your email and click the confirmation link before signing in.');
+      } else if (error.message?.includes('User already registered')) {
+        setError('An account with this email already exists. Please sign in instead.');
+      } else {
+        setError(error.message || 'An unexpected error occurred. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    const email = getValues('email');
+    if (!email) {
+      setError('Please enter your email address first.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      await resetPassword(email);
+      setResetPasswordSent(true);
+    } catch (error: any) {
+      console.error('Reset password error:', error);
+      setError('Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -71,6 +105,20 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
             : 'Create your account and start battling'}
         </p>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p className="text-sm text-red-600">{error}</p>
+        </div>
+      )}
+
+      {resetPasswordSent && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-sm text-green-600">
+            Password reset email sent! Check your inbox and follow the instructions to reset your password.
+          </p>
+        </div>
+      )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
         {mode === 'signup' && (
@@ -206,6 +254,19 @@ export default function AuthForm({ mode, onToggleMode }: AuthFormProps) {
         >
           {mode === 'signin' ? 'Sign In' : 'Create Account'}
         </Button>
+
+        {mode === 'signin' && (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={loading}
+              className="text-sm text-indigo-600 hover:text-indigo-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Forgot your password?
+            </button>
+          </div>
+        )}
       </form>
 
       <div className="text-center">
