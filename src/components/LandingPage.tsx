@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PenTool, Zap, Users, Trophy, ArrowRight, Crown, Sparkles, Heart, Star } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
+import AnimatedBackground from './ui/AnimatedBackground';
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -76,7 +77,10 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 relative overflow-hidden">
+      {/* Animated Background */}
+      <AnimatedBackground />
+      
       {/* Bolt Hackathon Badge */}
       <div className="fixed top-4 right-4 z-50">
         <a
@@ -134,7 +138,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <div className="relative overflow-hidden z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-20">
           <div className="text-center">
             <div className="flex justify-center mb-8">
@@ -186,7 +190,7 @@ export default function LandingPage() {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-gradient-to-br from-slate-900 to-gray-900">
+      <div className="py-20 bg-gradient-to-br from-slate-900 to-gray-900 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent mb-6">
@@ -216,7 +220,7 @@ export default function LandingPage() {
       </div>
 
       {/* What Poets Are Saying Section */}
-      <div className="py-20 bg-gradient-to-br from-purple-900 to-indigo-900">
+      <div className="py-20 bg-gradient-to-br from-purple-900 to-indigo-900 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent mb-6">
@@ -251,7 +255,7 @@ export default function LandingPage() {
       </div>
 
       {/* CTA Section */}
-      <div className="py-20 bg-gradient-to-r from-rose-600 via-pink-600 to-purple-700">
+      <div className="py-20 bg-gradient-to-r from-rose-600 via-pink-600 to-purple-700 relative z-10">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
           <div className="mb-8">
             <Crown className="h-16 w-16 text-yellow-400 mx-auto mb-4 animate-float" />
@@ -273,7 +277,7 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-900 py-12">
+      <footer className="bg-gray-900 py-12 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-2 text-2xl font-bold text-white mb-4">
