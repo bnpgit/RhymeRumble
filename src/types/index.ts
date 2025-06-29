@@ -24,6 +24,10 @@ export interface Theme {
   updated_at: string;
   participants?: number;
   total_poems?: number;
+  creator?: {
+    username: string;
+    avatar_url?: string;
+  };
 }
 
 export interface Poem {

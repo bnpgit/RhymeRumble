@@ -29,11 +29,21 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isValid },
     reset,
     setValue,
     watch,
-  } = useForm<ThemeFormData>();
+    trigger,
+  } = useForm<ThemeFormData>({
+    mode: 'onChange',
+    defaultValues: {
+      title: '',
+      description: '',
+      duality_option_1: '',
+      duality_option_2: '',
+      end_date: '',
+    },
+  });
 
   const currentValues = watch();
 
@@ -43,15 +53,37 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
       return;
     }
 
+    // Validate all required fields manually
+    if (!data.title?.trim()) {
+      trigger('title');
+      return;
+    }
+    if (!data.description?.trim()) {
+      trigger('description');
+      return;
+    }
+    if (!data.duality_option_1?.trim()) {
+      trigger('duality_option_1');
+      return;
+    }
+    if (!data.duality_option_2?.trim()) {
+      trigger('duality_option_2');
+      return;
+    }
+
     try {
       await createTheme.mutateAsync({
-        ...data,
+        title: data.title.trim(),
+        description: data.description.trim(),
+        duality_option_1: data.duality_option_1.trim(),
+        duality_option_2: data.duality_option_2.trim(),
         created_by: user.id,
         end_date: data.end_date || undefined,
       });
       reset();
       onClose();
     } catch (error) {
+      console.error('Theme creation error:', error);
       // Error is handled in the hook
     }
   };
@@ -94,6 +126,10 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
     setValue('duality_option_1', example.sides[0]);
     setValue('duality_option_2', example.sides[1]);
     setValue('description', example.description);
+    // Trigger validation after setting values
+    setTimeout(() => {
+      trigger(['title', 'duality_option_1', 'duality_option_2', 'description']);
+    }, 100);
   };
 
   const generateRandomExample = () => {
@@ -158,12 +194,16 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <Input
-            label="Battle Theme Title"
+            label="Battle Theme Title *"
             {...register('title', {
               required: 'Title is required',
               minLength: {
                 value: 5,
                 message: 'Title must be at least 5 characters',
+              },
+              validate: (value) => {
+                if (!value?.trim()) return 'Title is required';
+                return true;
               },
             })}
             error={errors.title?.message}
@@ -173,18 +213,26 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="First Perspective"
+              label="First Perspective *"
               {...register('duality_option_1', {
                 required: 'First perspective is required',
+                validate: (value) => {
+                  if (!value?.trim()) return 'First perspective is required';
+                  return true;
+                },
               })}
               error={errors.duality_option_1?.message}
               placeholder="e.g., Friend"
               className="font-medium border-2 border-gray-300 focus:border-purple-500"
             />
             <Input
-              label="Second Perspective"
+              label="Second Perspective *"
               {...register('duality_option_2', {
                 required: 'Second perspective is required',
+                validate: (value) => {
+                  if (!value?.trim()) return 'Second perspective is required';
+                  return true;
+                },
               })}
               error={errors.duality_option_2?.message}
               placeholder="e.g., Foe"
@@ -194,7 +242,7 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
 
           <div className="space-y-2">
             <label className="block text-sm font-bold text-gray-700">
-              Battle Description
+              Battle Description *
             </label>
             <textarea
               {...register('description', {
@@ -202,6 +250,10 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
                 minLength: {
                   value: 20,
                   message: 'Description must be at least 20 characters',
+                },
+                validate: (value) => {
+                  if (!value?.trim()) return 'Description is required';
+                  return true;
                 },
               })}
               rows={4}
@@ -254,6 +306,7 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
               type="submit" 
               loading={createTheme.isPending} 
               size="lg"
+              disabled={createTheme.isPending || !currentValues.title?.trim() || !currentValues.description?.trim() || !currentValues.duality_option_1?.trim() || !currentValues.duality_option_2?.trim()}
               className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 shadow-xl hover:shadow-2xl transform hover:scale-105 font-bold"
             >
               <Plus className="h-5 w-5 mr-2" />

@@ -9,13 +9,13 @@ export const useThemes = () => {
     queryKey: ['themes'],
     queryFn: async () => {
       try {
-        // Get themes with poem counts and participant counts
+        // Get themes with poem counts, participant counts, and creator info
         const { data, error } = await supabase
           .from('themes')
           .select(`
             *,
             poems(count),
-            profiles!themes_created_by_fkey(username)
+            profiles!themes_created_by_fkey(username, avatar_url)
           `)
           .order('created_at', { ascending: false });
 
@@ -50,6 +50,7 @@ export const useThemes = () => {
               ...theme,
               total_poems: theme.poems[0]?.count || 0,
               participants: uniqueParticipants,
+              creator: theme.profiles, // Add creator info
             };
           })
         );
@@ -91,7 +92,10 @@ export const useCreateTheme = () => {
       const { data, error } = await supabase
         .from('themes')
         .insert(themeData)
-        .select()
+        .select(`
+          *,
+          profiles!themes_created_by_fkey(username, avatar_url)
+        `)
         .single();
 
       if (error) throw error;

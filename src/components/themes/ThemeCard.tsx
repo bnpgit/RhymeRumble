@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Users, FileText, Flame, Heart, Shield, Zap, Crown, Star, ChevronDown, ChevronUp } from 'lucide-react';
+import { Clock, Users, FileText, Flame, Heart, Shield, Zap, Crown, Star, ChevronDown, ChevronUp, User } from 'lucide-react';
 import { Theme } from '../../types';
 import { usePoems } from '../../hooks/usePoems';
 import PoemCard from '../poems/PoemCard';
@@ -7,7 +7,7 @@ import Button from '../ui/Button';
 import LoadingSpinner from '../ui/LoadingSpinner';
 
 interface ThemeCardProps {
-  theme: Theme;
+  theme: Theme & { creator?: { username: string; avatar_url?: string } };
   onJoinBattle: (themeId: string) => void;
 }
 
@@ -76,6 +76,15 @@ export default function ThemeCard({ theme, onJoinBattle }: ThemeCardProps) {
               <p className="text-sm text-gray-500 font-medium">
                 {theme.duality_option_1} vs {theme.duality_option_2}
               </p>
+              {/* Battle Creator */}
+              {theme.creator && (
+                <div className="flex items-center space-x-1 mt-1">
+                  <User className="h-3 w-3 text-gray-400" />
+                  <span className="text-xs text-gray-500">
+                    Created by <span className="font-medium text-indigo-600">{theme.creator.username}</span>
+                  </span>
+                </div>
+              )}
             </div>
           </div>
           <span className={`px-3 py-1 rounded-full text-sm font-bold ${
