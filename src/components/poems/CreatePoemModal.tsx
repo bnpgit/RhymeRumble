@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { PenTool, Send, Lightbulb, Sparkles } from 'lucide-react';
 import { useCreatePoem } from '../../hooks/usePoems';
@@ -22,6 +23,7 @@ interface PoemFormData {
 
 export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemModalProps) {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const createPoem = useCreatePoem();
   const [showInspiration, setShowInspiration] = useState(false);
 
@@ -80,7 +82,10 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
   };
 
   const onSubmit = async (data: PoemFormData) => {
-    if (!user) return;
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
 
     try {
       await createPoem.mutateAsync({

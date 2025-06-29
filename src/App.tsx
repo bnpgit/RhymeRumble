@@ -1,9 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import Header from './components/layout/Header';
 import ProtectedRoute from './components/auth/ProtectedRoute';
+import LandingPage from './components/LandingPage';
 import AuthPage from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import ProfilePage from './pages/ProfilePage';
@@ -22,7 +23,7 @@ const queryClient = new QueryClient({
 });
 
 function App() {
-  const { loading } = useAuthStore();
+  const { loading, user } = useAuthStore();
 
   if (loading) {
     return (
@@ -48,14 +49,17 @@ function App() {
           />
           
           <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            
+            {/* Protected Routes with Header */}
             <Route
               path="/*"
               element={
                 <>
-                  <Header />
+                  {user && <Header />}
                   <Routes>
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route
                       path="/dashboard"
                       element={

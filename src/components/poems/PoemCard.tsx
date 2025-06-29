@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Heart, User } from 'lucide-react';
 import { Poem } from '../../types';
 import { useAuthStore } from '../../stores/authStore';
@@ -11,10 +12,14 @@ interface PoemCardProps {
 
 export default function PoemCard({ poem }: PoemCardProps) {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const likePoem = useLikePoem();
 
   const handleLike = () => {
-    if (!user) return;
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
     
     likePoem.mutate({
       poemId: poem.id,
@@ -86,7 +91,7 @@ export default function PoemCard({ poem }: PoemCardProps) {
             variant="ghost"
             size="sm"
             onClick={handleLike}
-            disabled={!user || likePoem.isPending}
+            disabled={likePoem.isPending}
             className={`${poem.is_liked ? 'text-red-500' : 'text-gray-500'} hover:text-red-500`}
           >
             <Heart className={`h-4 w-4 mr-1 ${poem.is_liked ? 'fill-current' : ''}`} />

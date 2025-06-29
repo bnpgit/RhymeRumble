@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { Lightbulb, Plus, Sparkles, Wand2 } from 'lucide-react';
 import { useCreateTheme } from '../../hooks/useThemes';
@@ -22,6 +23,7 @@ interface ThemeFormData {
 
 export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalProps) {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const createTheme = useCreateTheme();
 
   const {
@@ -36,7 +38,10 @@ export default function CreateThemeModal({ isOpen, onClose }: CreateThemeModalPr
   const currentValues = watch();
 
   const onSubmit = async (data: ThemeFormData) => {
-    if (!user) return;
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
 
     try {
       await createTheme.mutateAsync({
