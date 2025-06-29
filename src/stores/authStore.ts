@@ -17,55 +17,76 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       if (error) throw error;
 
-      if (data.user) {
-        // Fetch user profile
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', data.user.id)
-          .single();
+      if (data.user && data.session) {
+        // Set session immediately for faster UI response
+        set({ session: data.session, loading: false });
+        
+        // Fetch profile in background
+        try {
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
 
-        if (profileError) {
-          console.error('Profile fetch error:', profileError);
-          // If profile doesn't exist, create it
-          if (profileError.code === 'PGRST116') {
+          if (profile) {
+            set({
+              user: { ...profile, email: data.user.email! },
+              session: data.session,
+              loading: false,
+            });
+            toast.success('Welcome back!');
+          } else if (profileError?.code === 'PGRST116') {
+            // Profile doesn't exist, create it
+            const username = data.user.email?.split('@')[0] || 'user';
             const { error: createError } = await supabase
               .from('profiles')
               .insert({
                 id: data.user.id,
-                username: data.user.email?.split('@')[0] || 'user',
+                username,
                 points: 0,
                 level: 1,
               });
             
-            if (createError) throw createError;
-            
-            // Fetch the newly created profile
-            const { data: newProfile, error: newProfileError } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', data.user.id)
-              .single();
-            
-            if (newProfileError) throw newProfileError;
-            
-            set({
-              user: { ...newProfile, email: data.user.email! },
-              session: data.session,
-            });
-          } else {
-            throw profileError;
+            if (!createError) {
+              // Fetch the newly created profile
+              const { data: newProfile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', data.user.id)
+                .single();
+              
+              if (newProfile) {
+                set({
+                  user: { ...newProfile, email: data.user.email! },
+                  session: data.session,
+                  loading: false,
+                });
+                toast.success('Welcome to RhymeRumble!');
+              }
+            }
           }
-        } else {
+        } catch (profileError) {
+          console.error('Profile fetch error:', profileError);
+          // Continue with basic user info even if profile fails
           set({
-            user: { ...profile, email: data.user.email! },
+            user: {
+              id: data.user.id,
+              email: data.user.email!,
+              username: data.user.email?.split('@')[0] || 'user',
+              points: 0,
+              level: 1,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
             session: data.session,
+            loading: false,
           });
+          toast.success('Welcome back!');
         }
-
-        toast.success('Welcome back!');
       }
     } catch (error) {
+      set({ loading: false });
       const message = handleSupabaseError(error);
       toast.error(message);
       throw error;
@@ -74,15 +95,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signUp: async (email: string, password: string, username: string) => {
     try {
-      // Check if username is already taken
-      const { data: existingUser } = await supabase
+      // First check if username is available (with timeout)
+      const usernameCheckPromise = supabase
         .from('profiles')
         .select('username')
         .eq('username', username)
         .single();
 
-      if (existingUser) {
-        throw new Error('Username is already taken');
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Username check timeout')), 5000)
+      );
+
+      try {
+        const { data: existingUser } = await Promise.race([usernameCheckPromise, timeoutPromise]) as any;
+        if (existingUser) {
+          throw new Error('Username is already taken');
+        }
+      } catch (error: any) {
+        if (error.message !== 'Username check timeout' && error.code !== 'PGRST116') {
+          throw error;
+        }
+        // If timeout or no existing user, continue with signup
       }
 
       const { data, error } = await supabase.auth.signUp({
@@ -98,41 +131,48 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (error) throw error;
 
       if (data.user) {
-        // Create user profile immediately
-        const { error: profileError } = await supabase
-          .from('profiles')
-          .insert({
-            id: data.user.id,
-            username,
-            points: 0,
-            level: 1,
-          });
+        // Create profile asynchronously
+        const createProfile = async () => {
+          try {
+            await supabase
+              .from('profiles')
+              .insert({
+                id: data.user!.id,
+                username,
+                points: 0,
+                level: 1,
+              });
+          } catch (error) {
+            console.error('Profile creation error:', error);
+          }
+        };
 
-        if (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Don't throw here, as the user is already created
-        }
+        // Don't wait for profile creation
+        createProfile();
 
         // If user is immediately confirmed (no email verification required)
         if (data.session) {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', data.user.id)
-            .single();
-
-          if (profile) {
-            set({
-              user: { ...profile, email: data.user.email! },
-              session: data.session,
-            });
-            toast.success('🎉 Welcome to RhymeRumble! Your poetry journey begins now!');
-          }
+          set({
+            user: {
+              id: data.user.id,
+              email: data.user.email!,
+              username,
+              points: 0,
+              level: 1,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            },
+            session: data.session,
+            loading: false,
+          });
+          toast.success('🎉 Welcome to RhymeRumble! Your poetry journey begins now!');
         } else {
+          set({ loading: false });
           toast.success('Account created successfully! You can now sign in.');
         }
       }
     } catch (error) {
+      set({ loading: false });
       const message = handleSupabaseError(error);
       toast.error(message);
       throw error;
@@ -144,7 +184,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
 
-      set({ user: null, session: null });
+      set({ user: null, session: null, loading: false });
       toast.success('Signed out successfully');
       
       // Redirect to landing page after sign out
@@ -158,7 +198,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   resetPassword: async (email: string) => {
     try {
-      // Get the current domain for the redirect URL
       const currentDomain = window.location.origin;
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -196,51 +235,86 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 }));
 
-// Initialize auth state
+// Optimized auth state initialization
+let authInitialized = false;
+
 supabase.auth.onAuthStateChange(async (event, session) => {
   console.log('Auth state changed:', event, session?.user?.email);
   
   if (event === 'SIGNED_IN' && session?.user) {
-    // Fetch user profile
-    const { data: profile } = await supabase
+    // Set session immediately
+    useAuthStore.setState({
+      session,
+      loading: false,
+    });
+
+    // Fetch profile with timeout
+    const profilePromise = supabase
       .from('profiles')
       .select('*')
       .eq('id', session.user.id)
       .single();
 
-    if (profile) {
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Profile fetch timeout')), 8000)
+    );
+
+    try {
+      const { data: profile } = await Promise.race([profilePromise, timeoutPromise]) as any;
+      
+      if (profile) {
+        useAuthStore.setState({
+          user: { ...profile, email: session.user.email! },
+          session,
+          loading: false,
+        });
+      } else {
+        // Create basic user object if profile fetch fails
+        useAuthStore.setState({
+          user: {
+            id: session.user.id,
+            email: session.user.email!,
+            username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user',
+            points: 0,
+            level: 1,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+          session,
+          loading: false,
+        });
+
+        // Try to create profile in background
+        try {
+          const username = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user';
+          await supabase
+            .from('profiles')
+            .insert({
+              id: session.user.id,
+              username,
+              points: 0,
+              level: 1,
+            });
+        } catch (error) {
+          console.error('Background profile creation failed:', error);
+        }
+      }
+    } catch (error) {
+      console.error('Profile fetch error:', error);
+      // Fallback to basic user info
       useAuthStore.setState({
-        user: { ...profile, email: session.user.email! },
+        user: {
+          id: session.user.id,
+          email: session.user.email!,
+          username: session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user',
+          points: 0,
+          level: 1,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
         session,
         loading: false,
       });
-    } else {
-      // Create profile if it doesn't exist
-      const username = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user';
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: session.user.id,
-          username,
-          points: 0,
-          level: 1,
-        });
-
-      if (!error) {
-        const { data: newProfile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
-
-        if (newProfile) {
-          useAuthStore.setState({
-            user: { ...newProfile, email: session.user.email! },
-            session,
-            loading: false,
-          });
-        }
-      }
     }
   } else if (event === 'SIGNED_OUT') {
     useAuthStore.setState({
@@ -248,7 +322,9 @@ supabase.auth.onAuthStateChange(async (event, session) => {
       session: null,
       loading: false,
     });
-  } else {
+  } else if (!authInitialized) {
+    // Initial load
     useAuthStore.setState({ loading: false });
+    authInitialized = true;
   }
 });
