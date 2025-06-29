@@ -1,13 +1,22 @@
-import React, { useState } from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useSearchParams } from 'react-router-dom';
 import { PenTool } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 import AuthForm from '../components/auth/AuthForm';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
+  const [searchParams] = useSearchParams();
+  const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'signin';
+  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
   const { user, loading } = useAuthStore();
+
+  useEffect(() => {
+    const modeParam = searchParams.get('mode');
+    if (modeParam === 'signup' || modeParam === 'signin') {
+      setMode(modeParam);
+    }
+  }, [searchParams]);
 
   if (loading) {
     return (

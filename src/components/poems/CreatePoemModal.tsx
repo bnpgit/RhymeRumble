@@ -8,6 +8,7 @@ import { Theme } from '../../types';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 import Input from '../ui/Input';
+import toast from 'react-hot-toast';
 
 interface CreatePoemModalProps {
   isOpen: boolean;
@@ -95,8 +96,10 @@ export default function CreatePoemModal({ isOpen, onClose, theme }: CreatePoemMo
       });
       reset();
       onClose();
+      toast.success('🎉 Your poem has been submitted successfully!');
     } catch (error) {
-      // Error is handled in the hook
+      console.error('Error creating poem:', error);
+      toast.error('Failed to submit poem. Please try again.');
     }
   };
 

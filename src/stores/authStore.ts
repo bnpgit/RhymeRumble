@@ -126,7 +126,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
               user: { ...profile, email: data.user.email! },
               session: data.session,
             });
-            toast.success('Account created successfully! Welcome to RhymeRumble!');
+            toast.success('🎉 Welcome to RhymeRumble! Your poetry journey begins now!');
           }
         } else {
           toast.success('Account created successfully! You can now sign in.');
@@ -146,6 +146,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
       set({ user: null, session: null });
       toast.success('Signed out successfully');
+      
+      // Redirect to landing page after sign out
+      window.location.href = '/';
     } catch (error) {
       const message = handleSupabaseError(error);
       toast.error(message);
@@ -210,7 +213,7 @@ supabase.auth.onAuthStateChange(async (event, session) => {
       });
     } else {
       // Create profile if it doesn't exist
-      const username = session.user.email?.split('@')[0] || 'user';
+      const username = session.user.user_metadata?.username || session.user.email?.split('@')[0] || 'user';
       const { error } = await supabase
         .from('profiles')
         .insert({

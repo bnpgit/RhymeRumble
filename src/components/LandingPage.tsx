@@ -8,11 +8,11 @@ export default function LandingPage() {
   const { user } = useAuthStore();
 
   const handleGetStarted = () => {
-    if (user) {
-      navigate('/dashboard');
-    } else {
-      navigate('/auth');
-    }
+    navigate('/auth?mode=signup');
+  };
+
+  const handleSignIn = () => {
+    navigate('/auth?mode=signin');
   };
 
   const features = [
@@ -42,24 +42,36 @@ export default function LandingPage() {
     },
   ];
 
-  const testimonials = [
+  const poetQuotes = [
     {
-      name: 'PoetMaster',
-      quote: 'RhymeRumble transformed my poetry! The battles push me to be more creative.',
-      avatar: '👑',
-      level: 12,
+      quote: "Poetry is when an emotion has found its thought and the thought has found words.",
+      author: "Robert Frost",
+      avatar: '🌟',
     },
     {
-      name: 'VerseCrafter',
-      quote: 'I love the community here. Every poem tells a story, every battle is an adventure.',
-      avatar: '🏆',
-      level: 11,
+      quote: "A poet is, before anything else, a person who is passionately in love with language.",
+      author: "W.H. Auden",
+      avatar: '📝',
     },
     {
-      name: 'RhymeWarrior',
-      quote: 'The dual themes make you think differently. It\'s poetry with purpose!',
-      avatar: '⚡',
-      level: 10,
+      quote: "Poetry is the spontaneous overflow of powerful feelings.",
+      author: "William Wordsworth",
+      avatar: '💫',
+    },
+    {
+      quote: "Poetry is not a turning loose of emotion, but an escape from emotion.",
+      author: "T.S. Eliot",
+      avatar: '🎭',
+    },
+    {
+      quote: "The poet is the priest of the invisible.",
+      author: "Wallace Stevens",
+      avatar: '✨',
+    },
+    {
+      quote: "Poetry is the rhythmical creation of beauty in words.",
+      author: "Edgar Allan Poe",
+      avatar: '🖋️',
     },
   ];
 
@@ -88,13 +100,13 @@ export default function LandingPage() {
             ) : (
               <>
                 <button
-                  onClick={() => navigate('/auth')}
+                  onClick={handleSignIn}
                   className="text-white hover:text-yellow-300 font-medium transition-colors"
                 >
                   Sign In
                 </button>
                 <button
-                  onClick={() => navigate('/auth')}
+                  onClick={handleGetStarted}
                   className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-xl font-bold hover:from-yellow-500 hover:to-orange-600 transform hover:scale-105 transition-all duration-200 shadow-lg"
                 >
                   Get Started
@@ -187,75 +199,37 @@ export default function LandingPage() {
         </div>
       </div>
 
-      {/* Testimonials Section */}
+      {/* What Poets Are Saying Section */}
       <div className="py-20 bg-gradient-to-br from-purple-900 to-indigo-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-5xl font-bold bg-gradient-to-r from-pink-300 to-purple-300 bg-clip-text text-transparent mb-6">
-              What Poets Are Saying
+              What Great Minds Say About Poetry
             </h2>
-            <p className="text-xl text-white/80">Real stories from our poetry community</p>
+            <p className="text-xl text-white/80">Timeless wisdom from legendary poets and writers</p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {poetQuotes.map((quote, index) => (
               <div
-                key={testimonial.name}
+                key={index}
                 className="bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/20 hover:border-white/40 transition-all duration-300 hover:scale-105 animate-slideInUp"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
                 <div className="flex items-center space-x-4 mb-6">
                   <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-3 rounded-full text-2xl shadow-lg">
-                    {testimonial.avatar}
+                    {quote.avatar}
                   </div>
                   <div>
-                    <h4 className="text-xl font-bold text-white">{testimonial.name}</h4>
-                    <p className="text-white/60">Level {testimonial.level}</p>
+                    <h4 className="text-xl font-bold text-white">{quote.author}</h4>
+                    <p className="text-white/60">Legendary Poet</p>
                   </div>
                 </div>
                 <p className="text-white/80 text-lg leading-relaxed italic">
-                  "{testimonial.quote}"
+                  "{quote.quote}"
                 </p>
               </div>
             ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Stats Section */}
-      <div className="py-20 bg-gradient-to-br from-emerald-900 to-teal-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-5xl font-bold bg-gradient-to-r from-emerald-300 to-teal-300 bg-clip-text text-transparent mb-6">
-              Join the Movement
-            </h2>
-          </div>
-          
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-6xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent mb-2">
-                1,000+
-              </div>
-              <p className="text-white/80 text-xl">Active Poets</p>
-            </div>
-            <div className="text-center">
-              <div className="text-6xl font-bold bg-gradient-to-r from-pink-400 to-red-500 bg-clip-text text-transparent mb-2">
-                5,000+
-              </div>
-              <p className="text-white/80 text-xl">Poems Written</p>
-            </div>
-            <div className="text-center">
-              <div className="text-6xl font-bold bg-gradient-to-r from-blue-400 to-indigo-500 bg-clip-text text-transparent mb-2">
-                200+
-              </div>
-              <p className="text-white/80 text-xl">Battles Completed</p>
-            </div>
-            <div className="text-center">
-              <div className="text-6xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent mb-2">
-                24/7
-              </div>
-              <p className="text-white/80 text-xl">Community Active</p>
-            </div>
           </div>
         </div>
       </div>
@@ -295,7 +269,7 @@ export default function LandingPage() {
             </p>
           </div>
         </div>
-      </footer>
+      </div>
     </div>
   );
 }
