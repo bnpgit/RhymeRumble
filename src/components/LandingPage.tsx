@@ -90,9 +90,9 @@ export default function LandingPage() {
           className="block transform hover:scale-110 transition-transform duration-200"
         >
           <img
-            src="https://raw.githubusercontent.com/kickiniteasy/bolt-hackathon-badge/main/assets/bolt-badge-white.png"
-            alt="Built with Bolt"
-            className="w-16 h-16 md:w-20 md:h-20 drop-shadow-lg hover:drop-shadow-xl transition-all duration-200"
+            src="/logotext_poweredby_360w.png"
+            alt="Powered by Bolt"
+            className="w-20 h-auto md:w-24 drop-shadow-lg hover:drop-shadow-xl transition-all duration-200"
           />
         </a>
       </div>
@@ -177,13 +177,6 @@ export default function LandingPage() {
                 <span>{user ? 'Continue Your Journey' : 'Start Your Poetry Journey'}</span>
                 <ArrowRight className="h-6 w-6" />
               </button>
-              
-              {!user && (
-                <div className="flex items-center space-x-2 text-white/80">
-                  <Star className="h-5 w-5 text-yellow-400" />
-                  <span className="text-lg">Free to join • No credit card required</span>
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -285,7 +278,7 @@ export default function LandingPage() {
               <span>RhymeRumble</span>
             </div>
             <p className="text-gray-400">
-              © 2024 RhymeRumble. Where poetry meets passion.
+              © 2025 RhymeRumble. Where poetry meets passion.
             </p>
           </div>
         </div>
